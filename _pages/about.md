@@ -6,13 +6,12 @@ author_profile: true
 
 ## About Me
 
-Replace this section with your personal biography, research interests, and professional background.
+I am Anson Kwok, an MPhil student at HKUST starting in Fall 2025. I graduated from CUHK in 2024 with a degree in [Your Major].
 
 ## Education
 
-* **PhD in [Your Field]**, [University Name] (Year)
-* **MSc in [Your Field]**, [University Name] (Year)
-* **BSc in [Your Field]**, [University Name] (Year)
+* **MPhil in [Your Field]**, HKUST (2025 - Present)
+* **BSc in [Your Major]**, CUHK (2020 - 2024)
 
 ## Publications
 

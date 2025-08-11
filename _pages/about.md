@@ -1,17 +1,17 @@
 ---
 permalink: /
 title: "About Me"
-author_profile: true
+author_profile: false
 ---
 
 ## About Me
 
-I am Anson Kwok, an MPhil student at HKUST starting in Fall 2025. I graduated from CUHK in 2024 with a degree in [Your Major].
+I am Anson Kwok, an MPhil student at HKUST starting in Fall 2025. I graduated from CUHK in 2024 with a degree in Computer Science.
 
 ## Education
 
-* **MPhil in [Your Field]**, HKUST (2025 - Present)
-* **BSc in [Your Major]**, CUHK (2020 - 2024)
+* **MPhil in Computer Science**, HKUST (2025 - Present)
+* **BSc in Computer Science**, CUHK (2020 - 2024)
 
 ## Publications
 

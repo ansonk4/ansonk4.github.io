@@ -45,7 +45,6 @@
 }
 
 .masthead__menu {
-
   ul {
     margin: 0;
     padding: 0;
@@ -56,12 +55,44 @@
 
 .masthead__menu-item {
   background-color: var(--global-bg-color);
-  display: block;
+  display: inline-block;
   list-style-type: none;
   white-space: nowrap;
 
   &--lg {
     padding-right: 2em;
     font-weight: 700;
+  }
+  
+  a {
+    display: block;
+    padding: 0.5rem 1rem;
+    color: var(--global-masthead-link-color);
+    text-decoration: none;
+    
+    &:hover {
+      color: var(--global-masthead-link-color-hover);
+    }
+    
+    &:before {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      height: 4px;
+      background: var(--global-border-color);
+      width: 100%;
+      -webkit-transition: $global-transition;
+      transition: $global-transition;
+      -webkit-transform: scaleX(0);
+          -ms-transform: scaleX(0);
+              transform: scaleX(0); /* hide*/
+    }
+    
+    &:hover:before {
+      -webkit-transform: scaleX(1);
+          -ms-transform: scaleX(1);
+              transform: scaleX(1); /* reveal*/
+    }
   }
 }

@@ -1,19 +1,30 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 
 import SplitPane from "@/app/components/SplitPane";
+import TypingName from "@/app/components/TypingName";
 
 const papers = [
   {
     title: "SentinelRAG: Synthetic Sentinel Knowledge for RAG Database Copyright Protection",
-    authors: "Tsun On Kwok, Xi Yang, Ki Sen Hung, Chang Liu, Yangqiu Song",
+    authors: (
+      <>
+        <span className="font-semibold text-black">Tsun On Kwok</span>, Xi Yang, Ki Sen Hung, Chang Liu, Yangqiu
+        Song
+      </>
+    ),
     venue: "Under Review, 2026",
   },
   {
     title: "Into the Gray Zone: Domain Contexts Can Blur LLM Safety Boundaries",
-    authors:
-      "Ki Sen Hung, Xi Yang, Chang Liu, Haoran Li, Kejiang Chen, Changxuan Fan, Tsun On Kwok, Weiming Zhang, Xiaomeng Li, Yangqiu Song",
+    authors: (
+      <>
+        Ki Sen Hung, Xi Yang, Chang Liu, Haoran Li, Kejiang Chen, Changxuan Fan,{" "}
+        <span className="font-semibold text-black">Tsun On Kwok</span>, Weiming Zhang, Xiaomeng Li, Yangqiu Song
+      </>
+    ),
     venue: "Under Review, 2026",
   },
 ];
@@ -31,17 +42,32 @@ const education = [
   },
 ];
 
+const academicServices = [
+  {
+    role: "Reviewer",
+    detail: "ACL ARR 2026 January",
+  },
+];
+
+const teaching = [
+  {
+    course: "COMP 1023: Introduction to Python Programming",
+    role: "Teaching Assistant · HKUST",
+    term: "Spring 2026",
+  },
+];
+
 export default function Home() {
   const [isEmailHovered, setIsEmailHovered] = useState(false);
 
   return (
     <div className="h-screen min-h-[600px] w-screen overflow-hidden border border-black">
       <SplitPane direction="vertical" defaultSplit={25}>
-        <SplitPane direction="horizontal" defaultSplit={55}>
+        <SplitPane direction="horizontal" defaultSplit={45}>
           <div className="bento-cell flex items-center">
             <h1 className="text-[clamp(1.8rem,3.5vw,3.2rem)] font-semibold leading-tight tracking-[-0.5px]">
               <span className="block">Hi, I&apos;m</span>
-              <span className="block">Anson Kwok</span>
+              <span className="block"><TypingName /></span>
             </h1>
           </div>
 
@@ -57,7 +83,7 @@ export default function Home() {
           </div>
         </SplitPane>
 
-        <SplitPane direction="horizontal" defaultSplit={40}>
+        <SplitPane direction="horizontal" defaultSplit={25}>
           <div className="bento-cell flex flex-col bg-white">
             <h2 className="mb-1 text-[1.7rem] font-semibold">Selected Papers</h2>
 
@@ -72,17 +98,17 @@ export default function Home() {
             </div>
           </div>
 
-          <SplitPane direction="vertical" defaultSplit={60}>
-            <div className="bento-cell flex flex-col">
-              <div className="flex flex-row-reverse items-start gap-6">
-                <svg className="h-[120px] w-[120px] shrink-0" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-                  <rect width="120" height="120" rx="60" fill="#e0e0e0" />
-                  <circle cx="60" cy="42" r="28" fill="#333" />
-                  <rect x="32" y="55" width="56" height="40" rx="8" fill="#333" />
-                  <circle cx="48" cy="44" r="10" fill="none" stroke="#fff" strokeWidth="2" />
-                  <circle cx="72" cy="44" r="10" fill="none" stroke="#fff" strokeWidth="2" />
-                  <line x1="58" y1="44" x2="62" y2="44" stroke="#fff" strokeWidth="2" />
-                </svg>
+          <SplitPane direction="vertical" defaultSplit={45}>
+            <div className="bento-cell flex flex-col justify-center">
+              <div className="flex flex-row-reverse items-center gap-6">
+                <Image
+                  src="/me.png"
+                  alt="Photo of Tsun On Kwok"
+                  width={128}
+                  height={165}
+                  priority
+                  className="h-[165px] w-[128px] shrink-0 rounded-lg object-cover"
+                />
 
                 <div>
                   <p className="text-lg leading-relaxed text-black font-medium">
@@ -119,19 +145,48 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="bento-cell flex flex-col justify-center">
-              <h2 className="mb-1 text-[1.7rem] font-semibold">Education</h2>
+            <SplitPane direction="horizontal" defaultSplit={45}>
+              <div className="bento-cell flex flex-col justify-center">
+                <h2 className="mb-1 text-[1.7rem] font-semibold">Education</h2>
 
-              <div className="mt-2 flex flex-col gap-4">
-                {education.map((item) => (
-                  <article key={item.school}>
-                    <h3 className="text-sm font-semibold">{item.school}</h3>
-                    <p className="text-xs text-zinc-600">{item.degree}</p>
-                    <p className="text-xs text-zinc-500">{item.years}</p>
-                  </article>
-                ))}
+                <div className="mt-2 flex flex-col gap-4">
+                  {education.map((item) => (
+                    <article key={item.school}>
+                      <h3 className="text-sm font-semibold">{item.school}</h3>
+                      <p className="text-xs text-zinc-600">{item.degree}</p>
+                      <p className="text-xs text-zinc-500">{item.years}</p>
+                    </article>
+                  ))}
+                </div>
               </div>
-            </div>
+
+              <SplitPane direction="vertical" defaultSplit={50}>
+                <div className="bento-cell flex flex-col justify-center">
+                  <h2 className="mb-1 text-[1.2rem] font-semibold">Academic Service</h2>
+                  <div className="mt-2 flex flex-col gap-3">
+                    {academicServices.map((item) => (
+                      <article key={`${item.role}-${item.detail}`}>
+                        <h3 className="text-sm font-semibold">{item.role}</h3>
+                        <p className="text-xs text-zinc-600">{item.detail}</p>
+                      </article>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bento-cell flex flex-col justify-center">
+                  <h2 className="mb-1 text-[1.2rem] font-semibold">Teaching</h2>
+                  <div className="mt-2 flex flex-col gap-3">
+                    {teaching.map((item) => (
+                      <article key={item.course}>
+                        <h3 className="text-sm font-semibold">{item.course}</h3>
+                        <p className="text-xs text-zinc-600">{item.role}</p>
+                        <p className="text-xs text-zinc-500">{item.term}</p>
+                      </article>
+                    ))}
+                  </div>
+                </div>
+              </SplitPane>
+            </SplitPane>
           </SplitPane>
         </SplitPane>
       </SplitPane>

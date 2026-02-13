@@ -39,15 +39,19 @@ export default function Home() {
       <SplitPane direction="vertical" defaultSplit={25}>
         <SplitPane direction="horizontal" defaultSplit={55}>
           <div className="bento-cell flex items-center">
-            <h1 className="text-[clamp(1.8rem,3.5vw,3.2rem)] font-bold leading-tight tracking-[-0.5px]">Hi, I am Anson</h1>
+            <h1 className="text-[clamp(1.8rem,3.5vw,3.2rem)] font-semibold leading-tight tracking-[-0.5px]">
+              <span className="block">Hi, I&apos;m</span>
+              <span className="block">Anson Kwok</span>
+            </h1>
           </div>
 
           <div className="bento-cell flex flex-col justify-center">
-            <h2 className="text-[2.2rem] font-bold">Research</h2>
-            <div className="mt-4">
+            <h2 className="text-[1.7rem] font-semibold">Research</h2>
+            <div className="mt-2">
               <p className="leading-relaxed text-black font-medium">
-                My research interests lie in the areas of machine learning and large language models. I am currently
-                working on trustworthy artificial intelligence, improving robustness, interpretability, and fairness.
+                My research interests lie in the security and alignment of Large Language Models. 
+                I am currently working on developing robust frameworks for database copyright protection and mitigating context-aware adversarial vulnerabilities, 
+                ensuring both the integrity and safety of AI systems in deployment.
               </p>
             </div>
           </div>
@@ -55,10 +59,9 @@ export default function Home() {
 
         <SplitPane direction="horizontal" defaultSplit={40}>
           <div className="bento-cell flex flex-col bg-white">
-            <h2 className="mb-1 text-[2.2rem] font-bold">Selected Papers</h2>
-            <p className="text-sm text-zinc-500">Recent Publications</p>
+            <h2 className="mb-1 text-[1.7rem] font-semibold">Selected Papers</h2>
 
-            <div className="mt-5 flex flex-col gap-4">
+            <div className="mt-2 flex flex-col gap-4">
               {papers.map((paper) => (
                 <article key={paper.title}>
                   <h3 className="text-base font-semibold leading-snug">{paper.title}</h3>
@@ -71,8 +74,7 @@ export default function Home() {
 
           <SplitPane direction="vertical" defaultSplit={60}>
             <div className="bento-cell flex flex-col">
-              <h2 className="mb-5 text-[2.2rem] font-bold">About Me</h2>
-              <div className="flex flex-col items-start gap-6 lg:flex-row lg:items-start">
+              <div className="flex flex-row-reverse items-start gap-6">
                 <svg className="h-[120px] w-[120px] shrink-0" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
                   <rect width="120" height="120" rx="60" fill="#e0e0e0" />
                   <circle cx="60" cy="42" r="28" fill="#333" />
@@ -118,9 +120,9 @@ export default function Home() {
             </div>
 
             <div className="bento-cell flex flex-col justify-center">
-              <h2 className="mb-3 text-[2.2rem] font-bold">Education</h2>
+              <h2 className="mb-1 text-[1.7rem] font-semibold">Education</h2>
 
-              <div className="mt-4 flex flex-col gap-4">
+              <div className="mt-2 flex flex-col gap-4">
                 {education.map((item) => (
                   <article key={item.school}>
                     <h3 className="text-sm font-semibold">{item.school}</h3>

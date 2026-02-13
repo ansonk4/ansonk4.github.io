@@ -115,12 +115,12 @@ export default function SplitPane({
         zIndex: 10,
         ...(isHorizontal
             ? {
-                width: "2px",
+                width: "1px",
                 cursor: "col-resize",
                 height: "100%",
             }
             : {
-                height: "2px",
+                height: "1px",
                 cursor: "row-resize",
                 width: "100%",
             }),

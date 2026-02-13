@@ -4,11 +4,11 @@ import SplitPane from "./components/SplitPane";
 
 export default function Home() {
   return (
-    <div style={{ width: "100vw", height: "100vh", minHeight: "600px" }}>
+    <div style={{ width: "100vw", height: "100vh", minHeight: "600px", border: "1px solid #000" }}>
       {/* Outer split: top row vs bottom section */}
-      <SplitPane direction="vertical" defaultSplit={20}>
+      <SplitPane direction="vertical" defaultSplit={25}>
         {/* ===== TOP ROW ===== */}
-        <SplitPane direction="horizontal" defaultSplit={40}>
+        <SplitPane direction="horizontal" defaultSplit={55}>
           {/* Intro */}
           <div className="bento-cell cell-intro">
             <h1>
@@ -40,67 +40,10 @@ export default function Home() {
         <SplitPane direction="horizontal" defaultSplit={40}>
           {/* Work — left side */}
           <div className="bento-cell cell-work">
-            <div className="work-header">
-              <h2>Work</h2>
-              <p>Web Development</p>
-            </div>
-
-            <div className="work-illustration">
-              <svg
-                className="eye"
-                viewBox="0 0 100 50"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M5 25 Q50 -10 95 25 Q50 60 5 25Z"
-                  fill="none"
-                  stroke="#000"
-                  strokeWidth="2"
-                />
-                <circle cx="50" cy="25" r="10" fill="#000" />
-              </svg>
-
-              <span className="emotion-label">Emotion</span>
-
-              <svg
-                className="eye"
-                viewBox="0 0 100 50"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M5 25 Q50 -10 95 25 Q50 60 5 25Z"
-                  fill="none"
-                  stroke="#000"
-                  strokeWidth="2"
-                />
-                <circle cx="50" cy="25" r="10" fill="#000" />
-              </svg>
-            </div>
-
-            <div className="work-footer">
-              <div>
-                <span className="project-name">Emotion</span>
-                <div className="social-icons">
-                  <a href="#" aria-label="Twitter">
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
-                      <path d="M22.46 6c-.77.35-1.6.58-2.46.69a4.3 4.3 0 001.88-2.38 8.59 8.59 0 01-2.72 1.04 4.28 4.28 0 00-7.32 3.91A12.16 12.16 0 013.16 4.86a4.28 4.28 0 001.33 5.71 4.24 4.24 0 01-1.94-.54v.05a4.28 4.28 0 003.43 4.19 4.27 4.27 0 01-1.93.07 4.29 4.29 0 004 2.98A8.59 8.59 0 012 19.54a12.13 12.13 0 006.56 1.92c7.88 0 12.2-6.53 12.2-12.2l-.01-.56A8.72 8.72 0 0024 5.06a8.56 8.56 0 01-2.54.7z" />
-                    </svg>
-                  </a>
-                  <a href="#" aria-label="Link 1" style={{ fontWeight: 700, fontSize: "1rem" }}>L</a>
-                  <a href="#" aria-label="Link 2" style={{ fontWeight: 700, fontSize: "1rem" }}>L</a>
-                  <a href="#" aria-label="Link 3" style={{ fontWeight: 700, fontSize: "1rem" }}>L</a>
-                  <a href="#" aria-label="Link 4" style={{ fontWeight: 700, fontSize: "1rem" }}>L</a>
-                </div>
-              </div>
-              <div className="tech-tags">
-                <span>GSAP</span>
-                <span>Three.js</span>
-              </div>
+            <h2 style={{ fontSize: "2.2rem", fontWeight: 700, marginBottom: "4px" }}>Work</h2>
+            <p style={{ fontSize: "0.85rem", color: "#666" }}>Web Development</p>
+            <div style={{ marginTop: "20px" }}>
+              <p>Simple text area for work description.</p>
             </div>
           </div>
 

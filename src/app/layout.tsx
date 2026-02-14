@@ -4,7 +4,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Tsun On Kwok",
-  description: "Tsun On Kwok.",
+  description: "Tsun On Kwok",
   icons: {
     icon: "/ust.svg",
   },

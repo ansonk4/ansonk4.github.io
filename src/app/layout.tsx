@@ -3,9 +3,11 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Zoe — Full-stack Developer",
-  description:
-    "Portfolio of Zoe, a full-stack developer passionate about interactive frontend development.",
+  title: "Tsun On Kwok",
+  description: "Tsun On Kwok.",
+  icons: {
+    icon: "/ust.svg",
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

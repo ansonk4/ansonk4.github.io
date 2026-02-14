@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { Children, isValidElement, type CSSProperties, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 
 type SplitDirection = "horizontal" | "vertical";
 
@@ -142,12 +142,16 @@ export default function SplitPane({
         }),
   };
 
-  const childArray = Array.isArray(children) ? children : [children];
+  const childArray = Children.toArray(children);
+  const firstChild = childArray[0];
+  const secondChild = childArray[1];
+  const firstIsLeaf = !(isValidElement(firstChild) && firstChild.type === SplitPane);
+  const secondIsLeaf = !(isValidElement(secondChild) && secondChild.type === SplitPane);
 
   return (
     <div ref={containerRef} style={containerStyle}>
-      <div className="split-child" data-split-child style={firstStyle}>
-        {childArray[0]}
+      <div className={`split-child ${firstIsLeaf ? "split-leaf-child" : ""}`} data-split-child style={firstStyle}>
+        {firstChild}
       </div>
 
       <div
@@ -166,8 +170,8 @@ export default function SplitPane({
         <div style={hitAreaStyle} />
       </div>
 
-      <div className="split-child" data-split-child style={secondStyle}>
-        {childArray[1]}
+      <div className={`split-child ${secondIsLeaf ? "split-leaf-child" : ""}`} data-split-child style={secondStyle}>
+        {secondChild}
       </div>
     </div>
   );

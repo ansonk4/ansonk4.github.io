@@ -81,6 +81,11 @@ body {
   animation-name: split-line-grow-x;
 }
 
+.split-lines-animating .split-leaf-child:not(.split-content-reveal-target) {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
 .split-lines-animating .split-content-reveal-target {
   opacity: 0;
   transform: translateY(8px);

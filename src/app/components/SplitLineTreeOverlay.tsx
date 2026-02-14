@@ -480,9 +480,8 @@ function collectSplitLeafChildren(container: HTMLElement): SplitChildBounds[] {
   const offsetLeft = rootRect.left + container.clientLeft;
   const offsetTop = rootRect.top + container.clientTop;
 
-  const splitChildren = Array.from(container.querySelectorAll<HTMLElement>("[data-split-child]"));
+  const splitChildren = Array.from(container.querySelectorAll<HTMLElement>(".split-leaf-child[data-split-child]"));
   return splitChildren
-    .filter((element) => !element.querySelector("[data-split-divider]"))
     .map((element) => {
       const rect = element.getBoundingClientRect();
       return {
@@ -571,8 +570,8 @@ function getContentRevealDelay(child: SplitChildBounds, parts: GrowthPart[]) {
 function applyContentRevealSchedule(container: HTMLElement, parts: GrowthPart[]) {
   const children = collectSplitLeafChildren(container);
   for (const child of children) {
-    child.element.classList.add("split-content-reveal-target");
     child.element.style.setProperty("--split-content-delay", `${getContentRevealDelay(child, parts)}s`);
+    child.element.classList.add("split-content-reveal-target");
   }
 }
 

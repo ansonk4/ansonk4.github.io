@@ -146,12 +146,13 @@ export default function SplitPane({
 
   return (
     <div ref={containerRef} style={containerStyle}>
-      <div className="split-child" style={firstStyle}>
+      <div className="split-child" data-split-child style={firstStyle}>
         {childArray[0]}
       </div>
 
       <div
         className="relative"
+        data-split-divider
         style={dividerStyle}
         onMouseDown={(event) => {
           event.preventDefault();
@@ -165,7 +166,7 @@ export default function SplitPane({
         <div style={hitAreaStyle} />
       </div>
 
-      <div className="split-child" style={secondStyle}>
+      <div className="split-child" data-split-child style={secondStyle}>
         {childArray[1]}
       </div>
     </div>

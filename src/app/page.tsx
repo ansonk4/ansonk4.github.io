@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
 import SplitPane from "@/app/components/SplitPane";
+import SplitLineTreeOverlay from "@/app/components/SplitLineTreeOverlay";
 import TypingName from "@/app/components/TypingName";
 
 const papers = [
   {
-    title: "SentinelRAG: Synthetic Sentinel Knowledge for RAG Database Copyright Protection",
+    title: "[Hidden for double blind review]",
     authors: (
       <>
         <span className="font-semibold text-black">Tsun On Kwok</span>, Xi Yang, Ki Sen Hung, Chang Liu, Yangqiu
@@ -37,7 +38,7 @@ const education = [
   },
   {
     school: "CUHK",
-    degree: "B.Sc. in Computer Science",
+    degree: "B.Sc. in Computer Science, First Class Honours",
     years: "2020 - 2025",
   },
 ];
@@ -59,9 +60,43 @@ const teaching = [
 
 export default function Home() {
   const [isEmailHovered, setIsEmailHovered] = useState(false);
+  const [isEmailCopied, setIsEmailCopied] = useState(false);
+  const [isSplitLineAnimating, setIsSplitLineAnimating] = useState(true);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const emailCopyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const finishSplitLineAnimation = useCallback(() => {
+    setIsSplitLineAnimating(false);
+  }, []);
+  const handleEmailCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText("tokwok@connect.ust.hk");
+      setIsEmailCopied(true);
+      if (emailCopyTimeoutRef.current) {
+        clearTimeout(emailCopyTimeoutRef.current);
+      }
+      emailCopyTimeoutRef.current = setTimeout(() => {
+        setIsEmailCopied(false);
+      }, 1200);
+    } catch {
+      setIsEmailCopied(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (emailCopyTimeoutRef.current) {
+        clearTimeout(emailCopyTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
-    <div className="h-screen min-h-[600px] w-screen overflow-hidden border border-black">
+    <div
+      ref={rootRef}
+      className={`relative h-screen min-h-[600px] w-screen overflow-hidden border border-black ${
+        isSplitLineAnimating ? "split-lines-animating" : ""
+      }`}
+    >
       <SplitPane direction="vertical" defaultSplit={25}>
         <SplitPane direction="horizontal" defaultSplit={45}>
           <div className="bento-cell flex items-center">
@@ -71,13 +106,12 @@ export default function Home() {
             </h1>
           </div>
 
-          <div className="bento-cell flex flex-col justify-center">
+          <div className="bento-cell flex flex-col bento-safe-center">
             <h2 className="text-[1.7rem] font-semibold">Research</h2>
             <div className="mt-2">
               <p className="leading-relaxed text-black font-medium">
-                My research interests lie in the security and alignment of Large Language Models. 
-                I am currently working on developing robust frameworks for database copyright protection and mitigating context-aware adversarial vulnerabilities, 
-                ensuring both the integrity and safety of AI systems in deployment.
+                My research interests lie in the security and alignment of Large Language Models.
+                I am currently working on developing robust frameworks for database copyright protection and mitigating context-aware adversarial vulnerabilities.
               </p>
             </div>
           </div>
@@ -99,7 +133,7 @@ export default function Home() {
           </div>
 
           <SplitPane direction="vertical" defaultSplit={45}>
-            <div className="bento-cell flex flex-col justify-center">
+            <div className="bento-cell flex flex-col bento-safe-center">
               <div className="flex flex-row-reverse items-center gap-6">
                 <Image
                   src="/me.png"
@@ -112,19 +146,53 @@ export default function Home() {
 
                 <div>
                   <p className="text-lg leading-relaxed text-black font-medium">
-                    I am a first-year MPhil student in the Department of Computer Science and Engineering at the Hong
-                    Kong University of Science and Technology, supervised by Prof. Yangqiu Song. Previously, I earned
-                    my B.Sc. in Computer Science from The Chinese University of Hong Kong.
+                    I am a first-year MPhil student in the{" "}
+                    <a
+                      href="https://cse.hkust.edu.hk/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline decoration-1 underline-offset-4 hover:decoration-2"
+                    >
+                      Department of Computer Science and Engineering
+                    </a>{" "}
+                    at the{" "}
+                    <a
+                      href="https://hkust.edu.hk/zh-hant"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline decoration-1 underline-offset-4 hover:decoration-2"
+                    >
+                      Hong Kong University of Science and Technology
+                    </a>
+                    , supervised by{" "}
+                    <a
+                      href="https://www.cse.ust.hk/~yqsong/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline decoration-1 underline-offset-4 hover:decoration-2"
+                    >
+                      Prof. Yangqiu Song
+                    </a>
+                    . Previously, I earned my B.Sc. in Computer Science from{" "}
+                    <a
+                      href="https://www.cse.cuhk.edu.hk/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline decoration-1 underline-offset-4 hover:decoration-2"
+                    >
+                      The Chinese University of Hong Kong
+                    </a>
+                    .
                   </p>
                   <p
                     className="mt-4 flex w-fit cursor-pointer items-center gap-2 text-base underline"
                     title="Click to copy email"
-                    onClick={() => navigator.clipboard.writeText("tokwok@connect.ust.hk")}
+                    onClick={handleEmailCopy}
                     onMouseEnter={() => setIsEmailHovered(true)}
                     onMouseLeave={() => setIsEmailHovered(false)}
                   >
                     tokwok@connect.ust.hk
-                    {isEmailHovered && (
+                    {(isEmailHovered || isEmailCopied) && (
                       <svg
                         width="14"
                         height="14"
@@ -136,8 +204,14 @@ export default function Home() {
                         strokeLinejoin="round"
                         className="opacity-60"
                       >
-                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                        {isEmailCopied ? (
+                          <path d="M20 6 9 17l-5-5" />
+                        ) : (
+                          <>
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                          </>
+                        )}
                       </svg>
                     )}
                   </p>
@@ -146,7 +220,7 @@ export default function Home() {
             </div>
 
             <SplitPane direction="horizontal" defaultSplit={45}>
-              <div className="bento-cell flex flex-col justify-center">
+              <div className="bento-cell flex flex-col bento-safe-center">
                 <h2 className="mb-1 text-[1.7rem] font-semibold">Education</h2>
 
                 <div className="mt-2 flex flex-col gap-4">
@@ -161,7 +235,7 @@ export default function Home() {
               </div>
 
               <SplitPane direction="vertical" defaultSplit={50}>
-                <div className="bento-cell flex flex-col justify-center">
+                <div className="bento-cell flex flex-col bento-safe-center">
                   <h2 className="mb-1 text-[1.2rem] font-semibold">Academic Service</h2>
                   <div className="mt-2 flex flex-col gap-3">
                     {academicServices.map((item) => (
@@ -173,7 +247,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="bento-cell flex flex-col justify-center">
+                <div className="bento-cell flex flex-col bento-safe-center">
                   <h2 className="mb-1 text-[1.2rem] font-semibold">Teaching</h2>
                   <div className="mt-2 flex flex-col gap-3">
                     {teaching.map((item) => (
@@ -190,6 +264,10 @@ export default function Home() {
           </SplitPane>
         </SplitPane>
       </SplitPane>
+
+      {isSplitLineAnimating && (
+        <SplitLineTreeOverlay containerRef={rootRef} onDone={finishSplitLineAnimation} />
+      )}
     </div>
   );
 }

@@ -29,8 +29,97 @@ body {
 }
 
 .bento-cell {
-  width: 100%;
+  --bento-scrollbar-hide-size: 18px;
+  width: calc(100% + var(--bento-scrollbar-hide-size));
   height: 100%;
-  overflow: hidden;
-  padding: 32px 36px;
+  margin-right: calc(-1 * var(--bento-scrollbar-hide-size));
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 32px calc(36px + var(--bento-scrollbar-hide-size)) 32px 36px;
+}
+
+.bento-cell::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.bento-safe-center {
+  justify-content: center;
+  justify-content: safe center;
+}
+
+.split-lines-animating [data-split-divider] {
+  background: transparent !important;
+}
+
+.split-line-tree-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 40;
+}
+
+.split-line-growth-segment {
+  position: absolute;
+  background: #000;
+  animation-fill-mode: forwards;
+  animation-timing-function: linear;
+}
+
+.split-line-growth-vertical {
+  transform: scaleY(0);
+  animation-name: split-line-grow-y;
+}
+
+.split-line-growth-horizontal {
+  transform: scaleX(0);
+  animation-name: split-line-grow-x;
+}
+
+.split-lines-animating .split-content-reveal-target {
+  opacity: 0;
+  transform: translateY(8px);
+  will-change: opacity, transform;
+  animation-name: split-content-reveal;
+  animation-duration: 320ms;
+  animation-delay: var(--split-content-delay, 999s);
+  animation-fill-mode: forwards;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes split-line-grow-y {
+  from {
+    transform: scaleY(0);
+  }
+
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes split-line-grow-x {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes split-content-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

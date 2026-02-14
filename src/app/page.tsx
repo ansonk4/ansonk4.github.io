@@ -58,6 +58,76 @@ const teaching = [
   },
 ];
 
+const profileEmail = "tokwok@connect.ust.hk";
+
+const bioContent = (
+  <>
+    I am a first-year MPhil student in the{" "}
+    <a
+      href="https://cse.hkust.edu.hk/"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="underline decoration-1 underline-offset-4 hover:decoration-2"
+    >
+      Department of Computer Science and Engineering
+    </a>{" "}
+    at the{" "}
+    <a
+      href="https://hkust.edu.hk/zh-hant"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="underline decoration-1 underline-offset-4 hover:decoration-2"
+    >
+      Hong Kong University of Science and Technology
+    </a>
+    , supervised by{" "}
+    <a
+      href="https://www.cse.ust.hk/~yqsong/"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="underline decoration-1 underline-offset-4 hover:decoration-2"
+    >
+      Prof. Yangqiu Song
+    </a>
+    . Previously, I earned my B.Sc. in Computer Science from{" "}
+    <a
+      href="https://www.cse.cuhk.edu.hk/"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="underline decoration-1 underline-offset-4 hover:decoration-2"
+    >
+      The Chinese University of Hong Kong
+    </a>
+    .
+  </>
+);
+
+function EmailCopyIcon({ copied }: { copied: boolean }) {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="opacity-60"
+      aria-hidden
+    >
+      {copied ? (
+        <path d="M20 6 9 17l-5-5" />
+      ) : (
+        <>
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+        </>
+      )}
+    </svg>
+  );
+}
+
 export default function Home() {
   const [isEmailHovered, setIsEmailHovered] = useState(false);
   const [isEmailCopied, setIsEmailCopied] = useState(false);
@@ -69,7 +139,7 @@ export default function Home() {
   }, []);
   const handleEmailCopy = useCallback(async () => {
     try {
-      await navigator.clipboard.writeText("tokwok@connect.ust.hk");
+      await navigator.clipboard.writeText(profileEmail);
       setIsEmailCopied(true);
       if (emailCopyTimeoutRef.current) {
         clearTimeout(emailCopyTimeoutRef.current);
@@ -91,37 +161,49 @@ export default function Home() {
   }, []);
 
   return (
-    <div
-      ref={rootRef}
-      className={`relative h-screen min-h-[600px] w-screen overflow-hidden border border-black ${
-        isSplitLineAnimating ? "split-lines-animating" : ""
-      }`}
-    >
-      <SplitPane direction="vertical" defaultSplit={25}>
-        <SplitPane direction="horizontal" defaultSplit={45}>
-          <div className="bento-cell flex items-center">
-            <h1 className="text-[clamp(1.8rem,3.5vw,3.2rem)] font-semibold leading-tight tracking-[-0.5px]">
+    <>
+      <div className="relative h-screen w-screen overflow-y-auto border border-black bg-white lg:hidden">
+        <main className="mx-auto flex min-h-full max-w-4xl flex-col">
+          <section className="border-b border-black px-6 py-8">
+            <h1 className="text-[clamp(2rem,10vw,3rem)] font-semibold leading-tight tracking-[-0.5px]">
               <span className="block">Hi, I&apos;m</span>
-              <span className="block"><TypingName /></span>
+              <span className="block">
+                <TypingName />
+              </span>
             </h1>
-          </div>
+            <p className="mt-4 leading-relaxed text-black font-medium">
+              My research interests lie in the security and alignment of Large Language Models. I am currently
+              working on developing robust frameworks for database copyright protection and mitigating context-aware
+              adversarial vulnerabilities.
+            </p>
+            <button
+              type="button"
+              className="mt-5 flex w-fit cursor-pointer items-center gap-2 text-base underline"
+              title="Click to copy email"
+              onClick={handleEmailCopy}
+            >
+              {profileEmail}
+              {isEmailCopied && <EmailCopyIcon copied />}
+            </button>
+          </section>
 
-          <div className="bento-cell flex flex-col bento-safe-center">
-            <h2 className="text-[1.7rem] font-semibold">Research</h2>
-            <div className="mt-2">
-              <p className="leading-relaxed text-black font-medium">
-                My research interests lie in the security and alignment of Large Language Models.
-                I am currently working on developing robust frameworks for database copyright protection and mitigating context-aware adversarial vulnerabilities.
-              </p>
+          <section className="border-b border-black px-6 py-8">
+            <div className="flex flex-col gap-6">
+              <Image
+                src="/me.png"
+                alt="Photo of Tsun On Kwok"
+                width={128}
+                height={165}
+                priority
+                className="h-[165px] w-[128px] rounded-lg object-cover"
+              />
+              <p className="text-base leading-relaxed text-black font-medium">{bioContent}</p>
             </div>
-          </div>
-        </SplitPane>
+          </section>
 
-        <SplitPane direction="horizontal" defaultSplit={25}>
-          <div className="bento-cell flex flex-col bg-white">
-            <h2 className="mb-1 text-[1.7rem] font-semibold">Selected Papers</h2>
-
-            <div className="mt-2 flex flex-col gap-4">
+          <section className="border-b border-black px-6 py-8">
+            <h2 className="text-[1.7rem] font-semibold">Selected Papers</h2>
+            <div className="mt-4 flex flex-col gap-4">
               {papers.map((paper) => (
                 <article key={paper.title}>
                   <h3 className="text-base font-semibold leading-snug">{paper.title}</h3>
@@ -130,144 +212,169 @@ export default function Home() {
                 </article>
               ))}
             </div>
-          </div>
+          </section>
 
-          <SplitPane direction="vertical" defaultSplit={45}>
+          <section className="border-b border-black px-6 py-8">
+            <h2 className="text-[1.7rem] font-semibold">Education</h2>
+            <div className="mt-4 flex flex-col gap-4">
+              {education.map((item) => (
+                <article key={item.school}>
+                  <h3 className="text-sm font-semibold">{item.school}</h3>
+                  <p className="text-xs text-zinc-600">{item.degree}</p>
+                  <p className="text-xs text-zinc-500">{item.years}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="border-b border-black px-6 py-8">
+            <h2 className="text-[1.2rem] font-semibold">Academic Service</h2>
+            <div className="mt-3 flex flex-col gap-3">
+              {academicServices.map((item) => (
+                <article key={`${item.role}-${item.detail}`}>
+                  <h3 className="text-sm font-semibold">{item.role}</h3>
+                  <p className="text-xs text-zinc-600">{item.detail}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="px-6 py-8">
+            <h2 className="text-[1.2rem] font-semibold">Teaching</h2>
+            <div className="mt-3 flex flex-col gap-3">
+              {teaching.map((item) => (
+                <article key={item.course}>
+                  <h3 className="text-sm font-semibold">{item.course}</h3>
+                  <p className="text-xs text-zinc-600">{item.role}</p>
+                  <p className="text-xs text-zinc-500">{item.term}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+        </main>
+      </div>
+
+      <div
+        ref={rootRef}
+        className={`relative hidden h-screen min-h-[600px] w-screen overflow-hidden border border-black lg:block ${
+          isSplitLineAnimating ? "split-lines-animating" : ""
+        }`}
+      >
+        <SplitPane direction="vertical" defaultSplit={25}>
+          <SplitPane direction="horizontal" defaultSplit={45}>
+            <div className="bento-cell flex items-center">
+              <h1 className="text-[clamp(1.8rem,3.5vw,3.2rem)] font-semibold leading-tight tracking-[-0.5px]">
+                <span className="block">Hi, I&apos;m</span>
+                <span className="block">
+                  <TypingName />
+                </span>
+              </h1>
+            </div>
+
             <div className="bento-cell flex flex-col bento-safe-center">
-              <div className="flex flex-row-reverse items-center gap-6">
-                <Image
-                  src="/me.png"
-                  alt="Photo of Tsun On Kwok"
-                  width={128}
-                  height={165}
-                  priority
-                  className="h-[165px] w-[128px] shrink-0 rounded-lg object-cover"
-                />
+              <h2 className="text-[1.7rem] font-semibold">Research</h2>
+              <div className="mt-2">
+                <p className="leading-relaxed text-black font-medium">
+                  My research interests lie in the security and alignment of Large Language Models. I am currently
+                  working on developing robust frameworks for database copyright protection and mitigating
+                  context-aware adversarial vulnerabilities.
+                </p>
+              </div>
+            </div>
+          </SplitPane>
 
-                <div>
-                  <p className="text-lg leading-relaxed text-black font-medium">
-                    I am a first-year MPhil student in the{" "}
-                    <a
-                      href="https://cse.hkust.edu.hk/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline decoration-1 underline-offset-4 hover:decoration-2"
-                    >
-                      Department of Computer Science and Engineering
-                    </a>{" "}
-                    at the{" "}
-                    <a
-                      href="https://hkust.edu.hk/zh-hant"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline decoration-1 underline-offset-4 hover:decoration-2"
-                    >
-                      Hong Kong University of Science and Technology
-                    </a>
-                    , supervised by{" "}
-                    <a
-                      href="https://www.cse.ust.hk/~yqsong/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline decoration-1 underline-offset-4 hover:decoration-2"
-                    >
-                      Prof. Yangqiu Song
-                    </a>
-                    . Previously, I earned my B.Sc. in Computer Science from{" "}
-                    <a
-                      href="https://www.cse.cuhk.edu.hk/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline decoration-1 underline-offset-4 hover:decoration-2"
-                    >
-                      The Chinese University of Hong Kong
-                    </a>
-                    .
-                  </p>
-                  <p
-                    className="mt-4 flex w-fit cursor-pointer items-center gap-2 text-base underline"
-                    title="Click to copy email"
-                    onClick={handleEmailCopy}
-                    onMouseEnter={() => setIsEmailHovered(true)}
-                    onMouseLeave={() => setIsEmailHovered(false)}
-                  >
-                    tokwok@connect.ust.hk
-                    {(isEmailHovered || isEmailCopied) && (
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="opacity-60"
-                      >
-                        {isEmailCopied ? (
-                          <path d="M20 6 9 17l-5-5" />
-                        ) : (
-                          <>
-                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                          </>
-                        )}
-                      </svg>
-                    )}
-                  </p>
-                </div>
+          <SplitPane direction="horizontal" defaultSplit={25}>
+            <div className="bento-cell flex flex-col bg-white">
+              <h2 className="mb-1 text-[1.7rem] font-semibold">Selected Papers</h2>
+
+              <div className="mt-2 flex flex-col gap-4">
+                {papers.map((paper) => (
+                  <article key={paper.title}>
+                    <h3 className="text-base font-semibold leading-snug">{paper.title}</h3>
+                    <p className="text-xs text-zinc-700">{paper.authors}</p>
+                    <p className="text-xs italic text-zinc-500">{paper.venue}</p>
+                  </article>
+                ))}
               </div>
             </div>
 
-            <SplitPane direction="horizontal" defaultSplit={45}>
+            <SplitPane direction="vertical" defaultSplit={45}>
               <div className="bento-cell flex flex-col bento-safe-center">
-                <h2 className="mb-1 text-[1.7rem] font-semibold">Education</h2>
+                <div className="flex flex-row-reverse items-center gap-6">
+                  <Image
+                    src="/me.png"
+                    alt="Photo of Tsun On Kwok"
+                    width={128}
+                    height={165}
+                    priority
+                    className="h-[165px] w-[128px] shrink-0 rounded-lg object-cover"
+                  />
 
-                <div className="mt-2 flex flex-col gap-4">
-                  {education.map((item) => (
-                    <article key={item.school}>
-                      <h3 className="text-sm font-semibold">{item.school}</h3>
-                      <p className="text-xs text-zinc-600">{item.degree}</p>
-                      <p className="text-xs text-zinc-500">{item.years}</p>
-                    </article>
-                  ))}
+                  <div>
+                    <p className="text-lg leading-relaxed text-black font-medium">{bioContent}</p>
+                    <button
+                      type="button"
+                      className="mt-4 flex w-fit cursor-pointer items-center gap-2 text-base underline"
+                      title="Click to copy email"
+                      onClick={handleEmailCopy}
+                      onMouseEnter={() => setIsEmailHovered(true)}
+                      onMouseLeave={() => setIsEmailHovered(false)}
+                    >
+                      {profileEmail}
+                      {(isEmailHovered || isEmailCopied) && <EmailCopyIcon copied={isEmailCopied} />}
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <SplitPane direction="vertical" defaultSplit={50}>
+              <SplitPane direction="horizontal" defaultSplit={45}>
                 <div className="bento-cell flex flex-col bento-safe-center">
-                  <h2 className="mb-1 text-[1.2rem] font-semibold">Academic Service</h2>
-                  <div className="mt-2 flex flex-col gap-3">
-                    {academicServices.map((item) => (
-                      <article key={`${item.role}-${item.detail}`}>
-                        <h3 className="text-sm font-semibold">{item.role}</h3>
-                        <p className="text-xs text-zinc-600">{item.detail}</p>
+                  <h2 className="mb-1 text-[1.7rem] font-semibold">Education</h2>
+
+                  <div className="mt-2 flex flex-col gap-4">
+                    {education.map((item) => (
+                      <article key={item.school}>
+                        <h3 className="text-sm font-semibold">{item.school}</h3>
+                        <p className="text-xs text-zinc-600">{item.degree}</p>
+                        <p className="text-xs text-zinc-500">{item.years}</p>
                       </article>
                     ))}
                   </div>
                 </div>
 
-                <div className="bento-cell flex flex-col bento-safe-center">
-                  <h2 className="mb-1 text-[1.2rem] font-semibold">Teaching</h2>
-                  <div className="mt-2 flex flex-col gap-3">
-                    {teaching.map((item) => (
-                      <article key={item.course}>
-                        <h3 className="text-sm font-semibold">{item.course}</h3>
-                        <p className="text-xs text-zinc-600">{item.role}</p>
-                        <p className="text-xs text-zinc-500">{item.term}</p>
-                      </article>
-                    ))}
+                <SplitPane direction="vertical" defaultSplit={50}>
+                  <div className="bento-cell flex flex-col bento-safe-center">
+                    <h2 className="mb-1 text-[1.2rem] font-semibold">Academic Service</h2>
+                    <div className="mt-2 flex flex-col gap-3">
+                      {academicServices.map((item) => (
+                        <article key={`${item.role}-${item.detail}`}>
+                          <h3 className="text-sm font-semibold">{item.role}</h3>
+                          <p className="text-xs text-zinc-600">{item.detail}</p>
+                        </article>
+                      ))}
+                    </div>
                   </div>
-                </div>
+
+                  <div className="bento-cell flex flex-col bento-safe-center">
+                    <h2 className="mb-1 text-[1.2rem] font-semibold">Teaching</h2>
+                    <div className="mt-2 flex flex-col gap-3">
+                      {teaching.map((item) => (
+                        <article key={item.course}>
+                          <h3 className="text-sm font-semibold">{item.course}</h3>
+                          <p className="text-xs text-zinc-600">{item.role}</p>
+                          <p className="text-xs text-zinc-500">{item.term}</p>
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+                </SplitPane>
               </SplitPane>
             </SplitPane>
           </SplitPane>
         </SplitPane>
-      </SplitPane>
 
-      {isSplitLineAnimating && (
-        <SplitLineTreeOverlay containerRef={rootRef} onDone={finishSplitLineAnimation} />
-      )}
-    </div>
+        {isSplitLineAnimating && <SplitLineTreeOverlay containerRef={rootRef} onDone={finishSplitLineAnimation} />}
+      </div>
+    </>
   );
 }

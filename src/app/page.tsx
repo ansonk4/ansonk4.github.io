@@ -58,10 +58,12 @@ const teaching = [
   },
 ];
 
+const ENABLE_ENTRANCE_ANIMATION = false;
+
 export default function Home() {
   const [isEmailHovered, setIsEmailHovered] = useState(false);
   const [isEmailCopied, setIsEmailCopied] = useState(false);
-  const [isSplitLineAnimating, setIsSplitLineAnimating] = useState(true);
+  const [isSplitLineAnimating, setIsSplitLineAnimating] = useState(ENABLE_ENTRANCE_ANIMATION);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const emailCopyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const finishSplitLineAnimation = useCallback(() => {

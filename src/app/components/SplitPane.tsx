@@ -157,6 +157,7 @@ export default function SplitPane({
       <div
         className="relative"
         data-split-divider
+        data-split-axis={isHorizontal ? "vertical" : "horizontal"}
         style={dividerStyle}
         onMouseDown={(event) => {
           event.preventDefault();

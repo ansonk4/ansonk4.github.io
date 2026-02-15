@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
 import "./globals.css";
 
@@ -8,6 +8,10 @@ export const metadata: Metadata = {
   icons: {
     icon: "/ust.svg",
   },
+};
+
+export const viewport: Viewport = {
+  width: 1200,
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

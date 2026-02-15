@@ -22,22 +22,6 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-@media (max-width: 768px) and (orientation: portrait) {
-  html {
-    font-size: 8px;
-  }
-
-  .bento-cell {
-    --bento-scrollbar-hide-size: 12px;
-    padding: 16px calc(18px + var(--bento-scrollbar-hide-size)) 16px 18px;
-  }
-
-  .mobile-profile-image {
-    width: 78px !important;
-    height: 100px !important;
-  }
-}
-
 .split-child {
   min-width: 0;
   min-height: 0;

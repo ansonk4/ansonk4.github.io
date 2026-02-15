@@ -143,7 +143,7 @@ export default function Home() {
                   width={128}
                   height={165}
                   priority
-                  className="h-[165px] w-[128px] shrink-0 rounded-lg object-cover"
+                  className="mobile-profile-image h-[165px] w-[128px] shrink-0 rounded-lg object-cover"
                 />
 
                 <div>

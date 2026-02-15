@@ -13,6 +13,8 @@ body {
 
 html {
   font-size: 18px;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {

@@ -95,7 +95,7 @@ export default function Home() {
   return (
     <div
       ref={rootRef}
-      className={`relative h-screen min-h-[600px] w-screen overflow-hidden border border-black ${
+      className={`relative h-[100svh] min-h-0 w-screen overflow-hidden border border-black md:h-screen md:min-h-[600px] ${
         isSplitLineAnimating ? "split-lines-animating" : ""
       }`}
     >

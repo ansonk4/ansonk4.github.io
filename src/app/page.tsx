@@ -140,10 +140,10 @@ export default function Home() {
                 <Image
                   src="/me.png"
                   alt="Photo of Tsun On Kwok"
-                  width={120}
-                  height={155}
+                  width={140}
+                  height={180}
                   priority
-                  className="h-[155px] w-[120px] shrink-0 rounded-lg object-cover"
+                  className="h-[180px] w-[140px] shrink-0 rounded-lg object-cover max-[600px]:h-[155px] max-[600px]:w-[120px]"
                 />
 
                 <div>

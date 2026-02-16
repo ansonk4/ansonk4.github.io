@@ -12,7 +12,10 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   width: 1200,
-  initialScale: 0.33,
+  initialScale: 0.1,
+  minimumScale: 0.1,
+  maximumScale: 5,
+  userScalable: true,
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

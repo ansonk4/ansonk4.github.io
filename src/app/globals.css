@@ -102,6 +102,16 @@ body {
   }
 }
 
+@media (max-width: 768px) {
+  html {
+    font-size: 15px;
+  }
+
+  .bento-cell {
+    padding: 18px calc(20px + var(--bento-scrollbar-hide-size)) 18px 14px;
+  }
+}
+
 .split-lines-animating [data-split-divider]::after {
   opacity: 0 !important;
 }

@@ -136,7 +136,7 @@ export default function Home() {
 
           <SplitPane direction="vertical" defaultSplit={45}>
             <div className="bento-cell flex flex-col bento-safe-center">
-              <div className="flex flex-row-reverse items-center gap-6">
+              <div className="flex w-full flex-row-reverse items-center justify-end gap-6">
                 <Image
                   src="/me.png"
                   alt="Photo of Tsun On Kwok"

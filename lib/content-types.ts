@@ -15,6 +15,8 @@ export type Publication = {
   year: string;
   badge?: string;
   title: string;
+  paper?: string;
+  code?: string;
   authors: Array<{
     name: string;
     highlighted?: boolean;

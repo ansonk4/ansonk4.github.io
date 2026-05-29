@@ -30,3 +30,9 @@ export type Education = {
   detail: string;
   year: string;
 };
+
+export type CvEntry = {
+  title: string;
+  detail: string;
+  period: string;
+};

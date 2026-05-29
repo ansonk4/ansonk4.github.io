@@ -15,7 +15,7 @@ const accentClass: Record<Publication["accent"], string> = {
 export function PublicationsSection({ publications }: PublicationsSectionProps) {
   return (
     <section className="publications" aria-labelledby="publications-title">
-      <SectionTitle icon="/assets/icon-book.png">
+      <SectionTitle>
         <span id="publications-title">Selected Publications</span>
       </SectionTitle>
       <div className="publication-list">

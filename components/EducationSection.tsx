@@ -8,7 +8,7 @@ type EducationSectionProps = {
 export function EducationSection({ education }: EducationSectionProps) {
   return (
     <section className="education" aria-labelledby="education-title">
-      <SectionTitle icon="/assets/icon-cap.png">
+      <SectionTitle>
         <span id="education-title">Education</span>
       </SectionTitle>
       <div className="education-list">
@@ -23,12 +23,6 @@ export function EducationSection({ education }: EducationSectionProps) {
             <time>{item.year}</time>
           </article>
         ))}
-      </div>
-      <div className="skyline-wrap" aria-hidden="true">
-        <img
-          src="/assets/hong-kong-skyline.png"
-          alt=""
-        />
       </div>
     </section>
   );

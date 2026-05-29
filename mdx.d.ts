@@ -7,4 +7,6 @@ declare module "*.mdx" {
   export const profile: any;
   export const publications: any;
   export const education: any;
+  export const academicService: any;
+  export const teaching: any;
 }

@@ -7,7 +7,6 @@ import { CvSection } from "@/components/CvSection";
 import { EducationSection } from "@/components/EducationSection";
 import { Hero } from "@/components/Hero";
 import { PublicationsSection } from "@/components/PublicationsSection";
-import { SiteLogo } from "@/components/SiteLogo";
 import { SkylineFooter } from "@/components/SkylineFooter";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -15,7 +14,6 @@ export default function Home() {
   return (
     <main className="site-page">
       <div className="site-canvas">
-        <SiteLogo />
         <ThemeToggle />
         <Hero profile={profile}>
           <Biography />

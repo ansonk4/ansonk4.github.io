@@ -7,7 +7,6 @@ export type ProfileLink = {
 export type Profile = {
   name: string;
   email: string;
-  tagline: string;
   links: ProfileLink[];
 };
 
@@ -15,7 +14,6 @@ export type Publication = {
   venue: string;
   year: string;
   badge?: string;
-  accent: "blue" | "green" | "orange";
   title: string;
   authors: Array<{
     name: string;

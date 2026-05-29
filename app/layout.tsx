@@ -15,12 +15,8 @@ const themeScript = `
 `;
 
 export const metadata: Metadata = {
-  title: "Kai Lin | AI Researcher",
-  description: "Personal academic website for Kai Lin, AI researcher.",
-  icons: {
-    icon: "/assets/ust.svg",
-    shortcut: "/assets/ust.svg"
-  }
+  title: "Kwok Tsun On",
+  description: "Personal academic website for Kai Lin, AI researcher."
 };
 
 export default function RootLayout({
@@ -31,6 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <link rel="icon" href="/assets/ust.svg" type="image/svg+xml" />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>{children}</body>

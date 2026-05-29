@@ -6,12 +6,6 @@ type PublicationsSectionProps = {
   publications: Publication[];
 };
 
-const accentClass: Record<Publication["accent"], string> = {
-  blue: "accent-blue",
-  green: "accent-green",
-  orange: "accent-orange"
-};
-
 export function PublicationsSection({ publications }: PublicationsSectionProps) {
   return (
     <section className="publications" aria-labelledby="publications-title">
@@ -23,10 +17,10 @@ export function PublicationsSection({ publications }: PublicationsSectionProps) 
           <article className="publication-row" key={publication.title}>
             <div className="venue-block">
               <div className="venue-heading">
-                <strong className={accentClass[publication.accent]}>{publication.venue}</strong>
+                <strong className="accent-blue">{publication.venue}</strong>
                 {publication.badge ? (
                   <span
-                    className={`publication-badge ${accentClass[publication.accent]}${
+                    className={`publication-badge accent-blue${
                       publication.badge === "Oral" ? " publication-badge-bold" : ""
                     }`}
                   >

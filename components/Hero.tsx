@@ -29,14 +29,16 @@ export function Hero({ profile, children }: HeroProps) {
         <nav className="profile-links" aria-label="Profile links">
           {profile.links.map((link) => (
             <a key={link.label} href={link.href}>
-              <Image src={link.icon} alt="" width={18} height={18} />
+              <span className="profile-link-icon" aria-hidden="true">
+                <Image src={link.icon} alt="" width={18} height={18} />
+              </span>
               <span>{link.label}</span>
             </a>
           ))}
         </nav>
       </div>
 
-      <RandomHeroPanel tagline={profile.tagline} />
+      <RandomHeroPanel />
     </section>
   );
 }

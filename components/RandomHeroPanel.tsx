@@ -23,7 +23,7 @@ const photos: HeroPhoto[] = [
     width: 1280,
     height: 721,
     label: "DRX",
-    caption: "Deft lifting the torphy after 10 years"
+    caption: "Deft lifting the trophy after 10 years"
   },
   {
     src: "/assets/random/blg.webp",

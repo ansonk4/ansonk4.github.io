@@ -1,10 +1,25 @@
 import Image from "next/image";
-import type { Publication } from "@/lib/content-types";
+import type { ProfileLink, Publication } from "@/lib/content-types";
 import { SectionTitle } from "./SectionTitle";
 
 type PublicationsSectionProps = {
   publications: Publication[];
 };
+
+type PublicationLink = ProfileLink & {
+  size?: number;
+};
+
+function getPaperLink(href: string) {
+  const isArxivLink = href.includes("arxiv.org");
+
+  return {
+    label: isArxivLink ? "arXiv" : "Paper",
+    href,
+    icon: isArxivLink ? "/assets/icon-arxiv.svg" : "/assets/icon-paper.svg",
+    size: isArxivLink ? 16 : 20
+  };
+}
 
 export function PublicationsSection({ publications }: PublicationsSectionProps) {
   return (
@@ -14,10 +29,8 @@ export function PublicationsSection({ publications }: PublicationsSectionProps) 
       </SectionTitle>
       <div className="publication-list">
         {publications.map((publication) => {
-          const publicationLinks = [
-            ...(publication.paper
-              ? [{ label: "Paper", href: publication.paper, icon: "/assets/icon-paper.svg" }]
-              : []),
+          const publicationLinks: PublicationLink[] = [
+            ...(publication.paper ? [getPaperLink(publication.paper)] : []),
             ...(publication.code
               ? [{ label: "Code", href: publication.code, icon: "/assets/icon-github.svg" }]
               : []),
@@ -49,7 +62,7 @@ export function PublicationsSection({ publications }: PublicationsSectionProps) 
                           href={link.href}
                           aria-label={`${publication.title} ${link.label}`}
                         >
-                          <Image src={link.icon} alt="" width={20} height={20} />
+                          <Image src={link.icon} alt="" width={link.size ?? 20} height={link.size ?? 20} />
                         </a>
                       ))}
                     </div>

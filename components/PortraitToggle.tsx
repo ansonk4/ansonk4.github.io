@@ -9,6 +9,7 @@ type PortraitToggleProps = {
 
 const portraitSrc = "/assets/portrait.webp";
 const alternatePortraitSrc = "/assets/me.webp";
+const portraitSizes = "(max-width: 340px) 50vw, (max-width: 560px) 170px, (max-width: 768px) 70vw, 290px";
 
 export function PortraitToggle({ name }: PortraitToggleProps) {
   const [showAlternate, setShowAlternate] = useState(false);
@@ -27,7 +28,7 @@ export function PortraitToggle({ name }: PortraitToggleProps) {
         alt={showAlternate ? "" : `Portrait of ${name}`}
         aria-hidden={showAlternate}
         fill
-        sizes="(max-width: 768px) 70vw, 290px"
+        sizes={portraitSizes}
         priority
         className="portrait-image portrait-image-default"
       />
@@ -36,7 +37,7 @@ export function PortraitToggle({ name }: PortraitToggleProps) {
         alt={showAlternate ? `Portrait of ${name}` : ""}
         aria-hidden={!showAlternate}
         fill
-        sizes="(max-width: 768px) 70vw, 290px"
+        sizes={portraitSizes}
         loading="eager"
         className="portrait-image portrait-image-alternate"
       />

@@ -801,7 +801,7 @@ img {
 
   .portrait-wrap {
     justify-self: center;
-    width: min(36vw, 120px);
+    width: min(50vw, 170px);
   }
 
   .intro-panel {
@@ -872,7 +872,7 @@ img {
 
   .portrait-wrap {
     justify-self: center;
-    width: min(36vw, 120px);
+    width: min(50vw, 170px);
   }
 
   .intro-panel {

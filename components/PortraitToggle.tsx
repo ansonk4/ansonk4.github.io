@@ -7,12 +7,11 @@ type PortraitToggleProps = {
   name: string;
 };
 
-const portraitSrc = "/assets/portrait.png";
-const alternatePortraitSrc = "/assets/me.jpg";
+const portraitSrc = "/assets/portrait.webp";
+const alternatePortraitSrc = "/assets/me.webp";
 
 export function PortraitToggle({ name }: PortraitToggleProps) {
   const [showAlternate, setShowAlternate] = useState(false);
-  const src = showAlternate ? alternatePortraitSrc : portraitSrc;
 
   return (
     <button
@@ -24,12 +23,22 @@ export function PortraitToggle({ name }: PortraitToggleProps) {
       data-portrait={showAlternate ? "alternate" : "default"}
     >
       <Image
-        src={src}
-        alt={`Portrait of ${name}`}
+        src={portraitSrc}
+        alt={showAlternate ? "" : `Portrait of ${name}`}
+        aria-hidden={showAlternate}
         fill
         sizes="(max-width: 768px) 70vw, 290px"
-        priority={!showAlternate}
-        className="portrait-image"
+        priority
+        className="portrait-image portrait-image-default"
+      />
+      <Image
+        src={alternatePortraitSrc}
+        alt={showAlternate ? `Portrait of ${name}` : ""}
+        aria-hidden={!showAlternate}
+        fill
+        sizes="(max-width: 768px) 70vw, 290px"
+        loading="eager"
+        className="portrait-image portrait-image-alternate"
       />
     </button>
   );

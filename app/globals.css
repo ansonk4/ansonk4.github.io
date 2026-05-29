@@ -797,21 +797,27 @@ img {
     --section-badge-size: 0.82rem;
   }
 
+  .publications {
+    --publication-venue-column: clamp(4.75rem, 24vw, 5.5rem);
+    --publication-title-gap: clamp(8px, 2.4vw, 12px);
+  }
+
   .publication-list {
     gap: 34px;
   }
 
   .publication-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: var(--publication-venue-column) minmax(0, 1fr);
   }
 
   .venue-block {
-    grid-template-columns: auto auto 1fr;
+    grid-template-columns: minmax(0, 1fr);
     justify-items: start;
   }
 
-  .venue-block strong {
-    grid-column: auto;
+  .venue-heading {
+    grid-column: 1;
+    flex-wrap: wrap;
   }
 
   .education-row,
@@ -840,5 +846,10 @@ img {
   .intro-panel {
     width: 100%;
     padding-top: 0;
+  }
+
+  .publications {
+    --publication-venue-column: clamp(4.35rem, 25vw, 4.9rem);
+    --publication-title-gap: 8px;
   }
 }

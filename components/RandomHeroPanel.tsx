@@ -12,6 +12,10 @@ type HeroPhoto = {
   caption: string;
 };
 
+type RandomHeroPanelProps = {
+  className?: string;
+};
+
 const photos: HeroPhoto[] = [
   {
     src: "/assets/random/drx.png",
@@ -31,7 +35,7 @@ const photos: HeroPhoto[] = [
   }
 ];
 
-export function RandomHeroPanel() {
+export function RandomHeroPanel({ className }: RandomHeroPanelProps) {
   const [photoIndex, setPhotoIndex] = useState(0);
   const photo = photos[photoIndex];
 
@@ -41,23 +45,11 @@ export function RandomHeroPanel() {
 
   return (
     <button
-      className="research-asset"
+      className={["research-asset", className].filter(Boolean).join(" ")}
       type="button"
       onClick={showNextPhoto}
       aria-label={`Show next hero panel photo. Current photo: ${photo.label}`}
     >
-      <svg
-        className="sketch-card-border"
-        viewBox="0 0 360 450"
-        preserveAspectRatio="none"
-        aria-hidden="true"
-      >
-        <path d="M18 10 C66 3 121 10 175 7 C230 4 286 8 341 7 C352 10 356 22 354 38 C351 96 358 153 354 212 C350 279 357 348 351 430 C347 441 336 445 318 442 C255 438 198 447 139 443 C86 440 47 446 17 439 C8 421 10 381 8 332 C5 265 11 208 8 141 C5 77 8 31 18 10 Z" />
-        <path
-          className="sketch-card-border-echo"
-          d="M15 14 C58 8 115 5 166 9 C223 13 276 4 345 11 C353 19 354 31 352 48 C356 116 350 174 355 230 C359 296 350 363 354 424 C348 437 334 441 307 440 C244 445 193 439 132 442 C79 445 40 439 14 443 C10 405 7 373 10 319 C13 252 5 201 9 134 C12 73 5 32 15 14 Z"
-        />
-      </svg>
       <span className="research-title">Random Moments</span>
       <Image
         src={photo.src}

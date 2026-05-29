@@ -7,6 +7,7 @@ import { CvSection } from "@/components/CvSection";
 import { EducationSection } from "@/components/EducationSection";
 import { Hero } from "@/components/Hero";
 import { PublicationsSection } from "@/components/PublicationsSection";
+import { RandomHeroPanel } from "@/components/RandomHeroPanel";
 import { SkylineFooter } from "@/components/SkylineFooter";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -22,6 +23,7 @@ export default function Home() {
         <EducationSection education={education} />
         <CvSection id="academic-service" title="Academic Service" items={academicService} />
         <CvSection id="teaching" title="Teaching" items={teaching} />
+        <RandomHeroPanel className="hero-panel-bottom" />
         <SkylineFooter />
       </div>
     </main>

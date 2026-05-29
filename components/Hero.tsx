@@ -1,6 +1,7 @@
 import Image from "next/image";
 import type { Profile } from "@/lib/content-types";
 import { EmailCopy } from "./EmailCopy";
+import { PortraitToggle } from "./PortraitToggle";
 import { RandomHeroPanel } from "./RandomHeroPanel";
 
 type HeroProps = {
@@ -11,16 +12,7 @@ type HeroProps = {
 export function Hero({ profile, children }: HeroProps) {
   return (
     <section className="hero-grid" aria-labelledby="site-title">
-      <div className="portrait-wrap">
-        <Image
-          src="/assets/portrait.png"
-          alt={`Portrait of ${profile.name}`}
-          fill
-          sizes="(max-width: 768px) 70vw, 290px"
-          priority
-          className="portrait-image"
-        />
-      </div>
+      <PortraitToggle name={profile.name} />
 
       <div className="intro-panel">
         <h1 id="site-title">{profile.name}</h1>
@@ -38,7 +30,7 @@ export function Hero({ profile, children }: HeroProps) {
         </nav>
       </div>
 
-      <RandomHeroPanel />
+      <RandomHeroPanel className="hero-panel-desktop" />
     </section>
   );
 }

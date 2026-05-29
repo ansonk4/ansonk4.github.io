@@ -14,13 +14,13 @@ export function EducationSection({ education }: EducationSectionProps) {
       <div className="education-list">
         {education.map((item) => (
           <article className="education-row" key={`${item.degree}-${item.year}`}>
+            <time>{item.year}</time>
             <div>
               <h3>
                 {item.degree}, {item.institution}
               </h3>
               <p>{item.detail}</p>
             </div>
-            <time>{item.year}</time>
           </article>
         ))}
       </div>

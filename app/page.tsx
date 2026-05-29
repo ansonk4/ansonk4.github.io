@@ -22,7 +22,7 @@ export default function Home() {
         <PublicationsSection publications={publications} />
         <EducationSection education={education} />
         <CvSection id="academic-service" title="Academic Service" items={academicService} />
-        <CvSection id="teaching" title="Teaching" items={teaching} />
+        <CvSection id="teaching" title="Teaching" items={teaching} dateLeft />
         <RandomHeroPanel className="hero-panel-bottom" />
         <SkylineFooter />
       </div>

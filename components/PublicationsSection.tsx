@@ -22,7 +22,18 @@ export function PublicationsSection({ publications }: PublicationsSectionProps) 
         {publications.map((publication) => (
           <article className="publication-row" key={publication.title}>
             <div className="venue-block">
-              <strong className={accentClass[publication.accent]}>{publication.venue}</strong>
+              <div className="venue-heading">
+                <strong className={accentClass[publication.accent]}>{publication.venue}</strong>
+                {publication.badge ? (
+                  <span
+                    className={`publication-badge ${accentClass[publication.accent]}${
+                      publication.badge === "Oral" ? " publication-badge-bold" : ""
+                    }`}
+                  >
+                    {publication.badge}
+                  </span>
+                ) : null}
+              </div>
               <span>{publication.year}</span>
               {publication.links?.length ? (
                 <div className="paper-links">

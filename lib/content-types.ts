@@ -14,6 +14,7 @@ export type Profile = {
 export type Publication = {
   venue: string;
   year: string;
+  badge?: string;
   accent: "blue" | "green" | "orange";
   title: string;
   authors: Array<{

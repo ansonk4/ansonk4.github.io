@@ -12,14 +12,6 @@
 
 @font-face {
   font-family: "et-book";
-  src: url("https://edwardtufte.github.io/tufte-css/et-book/et-book-display-italic-old-style-figures/et-book-display-italic-old-style-figures.woff") format("woff");
-  font-weight: 400;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "et-book";
   src: url("https://edwardtufte.github.io/tufte-css/et-book/et-book-bold-line-figures/et-book-bold-line-figures.woff") format("woff");
   font-weight: 700;
   font-style: normal;
@@ -28,12 +20,12 @@
 
 :root {
   --font-tufte: "et-book", Palatino, "Palatino Linotype", "Palatino LT STD", "Book Antiqua", Georgia, serif;
-  --type-body: 1.4rem;
-  --type-body-leading: 2rem;
-  --type-title: 3.2rem;
-  --type-section: 2.2rem;
-  --type-subsection: 1.7rem;
-  --type-small: 1.1rem;
+  --type-body: 1.22rem;
+  --type-body-leading: 1.78rem;
+  --type-title: 2.8rem;
+  --type-section: 1.95rem;
+  --type-subsection: 1.48rem;
+  --type-small: 0.98rem;
   color-scheme: light;
   background: #ffffff;
 }
@@ -44,7 +36,7 @@
 
 html {
   min-width: 320px;
-  font-size: 15px;
+  font-size: 14px;
   background: #ffffff;
 }
 
@@ -61,8 +53,28 @@ a {
   text-decoration: none;
 }
 
+em,
+i,
+cite,
+dfn,
+address {
+  font-style: normal;
+}
+
 img {
   display: block;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .site-page {
@@ -72,6 +84,8 @@ img {
 }
 
 .site-canvas {
+  display: flex;
+  flex-direction: column;
   width: min(100%, 1128px);
   min-height: 100vh;
   margin: 0 auto;
@@ -144,11 +158,47 @@ img {
 }
 
 .email {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   margin: 24px 0 14px;
+  padding: 0;
+  border: 0;
+  appearance: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-family: var(--font-tufte);
   font-size: var(--type-small);
   font-weight: 400;
   line-height: 1.3;
+  text-align: left;
+}
+
+.email-icon-wrap {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 140ms ease;
+}
+
+.email:hover .email-icon-wrap,
+.email:focus-visible .email-icon-wrap,
+.email.email-copied .email-icon-wrap {
+  opacity: 1;
+}
+
+.email-icon {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .profile-links {
@@ -168,7 +218,14 @@ img {
   line-height: 1.3;
 }
 
-.profile-links img,
+.profile-links img {
+  width: 18px;
+  height: 18px;
+  filter: none;
+  mix-blend-mode: normal;
+  opacity: 0.95;
+}
+
 .paper-links img {
   filter: contrast(1.18) saturate(0.72);
   mix-blend-mode: multiply;
@@ -205,7 +262,8 @@ img {
   z-index: 1;
   width: 100%;
   height: 358px;
-  object-fit: contain;
+  object-fit: cover;
+  object-position: center;
 }
 
 .research-asset::before {
@@ -216,7 +274,7 @@ img {
   z-index: 1;
   color: #111111;
   font-family: "Comic Sans MS", "Bradley Hand", cursive;
-  font-size: 32px;
+  font-size: 27px;
   line-height: 1;
   transform: rotate(21deg);
 }
@@ -264,7 +322,6 @@ img {
   min-width: 0;
   font-family: var(--font-tufte);
   font-size: var(--type-section);
-  font-style: italic;
   font-weight: 400;
   line-height: 1;
 }
@@ -290,11 +347,16 @@ img {
   padding-left: 30px;
 }
 
-.venue-block strong {
+.venue-heading {
   grid-column: 1 / -1;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.venue-block strong {
   font-family: var(--font-tufte);
   font-size: var(--type-subsection);
-  font-style: italic;
   font-weight: 400;
   line-height: 1;
 }
@@ -303,6 +365,15 @@ img {
   font-family: var(--font-tufte);
   font-size: var(--type-body);
   line-height: var(--type-body-leading);
+}
+
+.venue-block .publication-badge {
+  font-size: 1.12rem;
+  line-height: 1;
+}
+
+.venue-block .publication-badge-bold {
+  font-weight: 700;
 }
 
 .accent-blue {
@@ -333,7 +404,6 @@ img {
   margin: 0 0 9px;
   font-family: var(--font-tufte);
   font-size: var(--type-subsection);
-  font-style: italic;
   font-weight: 400;
   line-height: 1;
 }
@@ -346,6 +416,9 @@ img {
 }
 
 .education {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   margin-top: 46px;
 }
 
@@ -370,7 +443,6 @@ img {
   margin: 0 0 5px;
   font-family: var(--font-tufte);
   font-size: var(--type-subsection);
-  font-style: italic;
   font-weight: 400;
   line-height: 1;
 }
@@ -389,7 +461,8 @@ img {
 }
 
 .skyline-wrap {
-  margin: 24px -30px 0;
+  margin: auto -30px 0;
+  padding-top: 24px;
   overflow: visible;
 }
 
@@ -400,6 +473,8 @@ img {
   object-position: bottom center;
   mix-blend-mode: multiply;
   filter: saturate(0.85) contrast(1.02);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 4%, #000 96%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 4%, #000 96%, transparent 100%);
 }
 
 @media (max-width: 1050px) {

@@ -2,7 +2,6 @@ import Image from "next/image";
 import type { Profile } from "@/lib/content-types";
 import { EmailCopy } from "./EmailCopy";
 import { PortraitToggle } from "./PortraitToggle";
-import { RandomHeroPanel } from "./RandomHeroPanel";
 
 type HeroProps = {
   profile: Profile;
@@ -29,8 +28,6 @@ export function Hero({ profile, children }: HeroProps) {
           ))}
         </nav>
       </div>
-
-      <RandomHeroPanel className="hero-panel-desktop" />
     </section>
   );
 }

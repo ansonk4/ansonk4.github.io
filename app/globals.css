@@ -316,6 +316,10 @@ img {
   margin: 0;
 }
 
+.bio-copy p + p {
+  margin-top: 0.75em;
+}
+
 .bio-copy a {
   text-decoration: underline;
   text-decoration-thickness: 1px;

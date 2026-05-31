@@ -50,7 +50,7 @@ export function RandomHeroPanel({ className }: RandomHeroPanelProps) {
       onClick={showNextPhoto}
       aria-label={`Show next hero panel photo. Current photo: ${photo.label}`}
     >
-      <span className="research-title">Random Moments</span>
+      <span className="research-title">Moments</span>
       <span className="research-image-stack">
         {photos.map((heroPhoto, index) => {
           const isActive = index === photoIndex;

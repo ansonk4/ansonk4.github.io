@@ -15,8 +15,8 @@ const themeScript = `
 `;
 
 export const metadata: Metadata = {
-  title: "Kwok Tsun On",
-  description: "Personal academic website for Kai Lin, AI researcher."
+  title: "Anson Tsun On Kwok",
+  description: "Personal academic website for Anson Tsun On Kwok, AI researcher."
 };
 
 export default function RootLayout({

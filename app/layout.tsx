@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 
 const themeScript = `
@@ -19,6 +20,13 @@ export const metadata: Metadata = {
   description: "Personal academic website for Anson Tsun On Kwok, AI researcher."
 };
 
+const cloudflareWebAnalyticsToken =
+  process.env.NEXT_PUBLIC_CLOUDFLARE_WEB_ANALYTICS_TOKEN;
+
+const cloudflareWebAnalyticsConfig = cloudflareWebAnalyticsToken
+  ? JSON.stringify({ token: cloudflareWebAnalyticsToken })
+  : null;
+
 export default function RootLayout({
   children
 }: Readonly<{
@@ -30,7 +38,17 @@ export default function RootLayout({
         <link rel="icon" href="/assets/ust.svg" type="image/svg+xml" />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        {cloudflareWebAnalyticsConfig ? (
+          <Script
+            id="cloudflare-web-analytics"
+            src="https://static.cloudflareinsights.com/beacon.min.js"
+            strategy="afterInteractive"
+            data-cf-beacon={cloudflareWebAnalyticsConfig}
+          />
+        ) : null}
+      </body>
     </html>
   );
 }

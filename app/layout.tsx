@@ -35,6 +35,13 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <link
+          rel="preload"
+          href="/fonts/et-book/et-book-roman-line-figures.woff"
+          as="font"
+          type="font/woff"
+          crossOrigin="anonymous"
+        />
         <link rel="icon" href="/assets/ust.svg" type="image/svg+xml" />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>

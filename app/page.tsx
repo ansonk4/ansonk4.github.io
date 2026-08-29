@@ -2,6 +2,7 @@ import Biography, { profile } from "@/content/biography.mdx";
 import { academicService } from "@/content/academic-service.mdx";
 import { education } from "@/content/education.mdx";
 import { publications } from "@/content/publications.mdx";
+import { settings } from "@/content/settings";
 import { teaching } from "@/content/teaching.mdx";
 import { CvSection } from "@/components/CvSection";
 import { EducationSection } from "@/components/EducationSection";
@@ -23,12 +24,14 @@ export default function Home() {
         <EducationSection education={education} />
         <CvSection id="academic-service" title="Academic Service" items={academicService} />
         <CvSection id="teaching" title="Teaching" items={teaching} />
-        <RandomHeroPanel className="hero-panel-bottom" />
-        <blockquote className="playground-quote">
-          <span>“This used to be our playground.</span>
-          <span>This was our playground.</span>
-          <span>This is our playground.”</span>
-        </blockquote>
+        {settings.showMisc && <RandomHeroPanel className="hero-panel-bottom" />}
+        {settings.showQuote && (
+          <blockquote className="playground-quote">
+            <span>“This used to be our playground.</span>
+            <span>This was our playground.</span>
+            <span>This is our playground.”</span>
+          </blockquote>
+        )}
         <SkylineFooter />
       </div>
     </main>

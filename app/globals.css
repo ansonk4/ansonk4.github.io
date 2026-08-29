@@ -500,6 +500,20 @@ img {
   text-align: center;
 }
 
+.playground-quote {
+  width: min(100%, 620px);
+  margin: clamp(18px, 3vw, 30px) auto 0;
+  color: var(--color-copy);
+  font-size: var(--type-body);
+  font-style: italic;
+  line-height: var(--type-body-leading);
+  text-align: center;
+}
+
+.playground-quote span {
+  display: block;
+}
+
 .publications {
   --section-heading-size: 1.62rem;
   --section-item-size: 1.2rem;

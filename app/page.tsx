@@ -24,6 +24,11 @@ export default function Home() {
         <CvSection id="academic-service" title="Academic Service" items={academicService} />
         <CvSection id="teaching" title="Teaching" items={teaching} />
         <RandomHeroPanel className="hero-panel-bottom" />
+        <blockquote className="playground-quote">
+          <span>“This used to be our playground.</span>
+          <span>This was our playground.</span>
+          <span>This is our playground.”</span>
+        </blockquote>
         <SkylineFooter />
       </div>
     </main>

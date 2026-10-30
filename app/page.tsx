@@ -16,9 +16,9 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 export default function Home() {
   return (
     <main className="site-page">
-      {settings.showSharks && <AsciiSharks />}
       <div className="site-canvas">
         <ThemeToggle />
+        {settings.showSharks && <AsciiSharks />}
         <Hero profile={profile}>
           <Biography />
         </Hero>

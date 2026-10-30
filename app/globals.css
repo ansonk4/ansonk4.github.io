@@ -144,10 +144,12 @@ img {
 .ascii-sharks {
   position: fixed;
   inset: 0;
-  z-index: 0;
+  z-index: -1;
   display: block;
   width: 100vw;
   height: 100vh;
+  /* Large viewport height, so mobile toolbars showing and hiding don't resize the ocean mid-scroll. */
+  height: 100lvh;
   font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
   opacity: 0.32;
   pointer-events: none;
@@ -159,13 +161,60 @@ img {
   opacity: 0.26;
 }
 
-.ascii-sharks ~ .site-canvas {
+.site-canvas:has(> .ascii-sharks) {
   z-index: 1;
   background: transparent;
 }
 
+.sharks-toggle {
+  position: absolute;
+  top: clamp(14px, 2.4vw, 28px);
+  right: calc(clamp(16px, 4vw, 38px) + 40px);
+  z-index: 4;
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.sharks-toggle:hover {
+  color: var(--color-link);
+}
+
+.sharks-toggle:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+.sharks-icon {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.85;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sharks-icon-slash {
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.sharks-toggle[data-off] .sharks-icon-slash {
+  opacity: 1;
+}
+
 @media print {
-  .ascii-sharks {
+  .ascii-sharks,
+  .sharks-toggle {
     display: none;
   }
 }

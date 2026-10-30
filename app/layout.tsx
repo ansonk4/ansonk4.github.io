@@ -11,6 +11,12 @@ const themeScript = `
   } catch (error) {
     document.documentElement.dataset.theme = "light";
   }
+  try {
+    document.documentElement.dataset.sharks =
+      window.localStorage.getItem("sharks") === "off" ? "off" : "on";
+  } catch (error) {
+    document.documentElement.dataset.sharks = "on";
+  }
 })();
 `;
 

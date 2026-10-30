@@ -94,6 +94,19 @@ export class World {
   sharks: Shark[] = [];
   events: WorldEvent[] = [];
   pointer = { x: 0, y: 0, active: false };
+  /**
+   * The slice of the canvas currently on screen (local change: the canvas spans
+   * the whole page, so sharks size themselves to and patrol around the viewport).
+   */
+  view = { top: 0, height: 0 };
+
+  private get viewHeight() {
+    return this.view.height > 0 ? Math.min(this.view.height, this.height) : this.height;
+  }
+
+  private get viewCenterY() {
+    return this.view.height > 0 ? this.view.top + this.viewHeight / 2 : this.height / 2;
+  }
 
   /** Fish neighbourhood radius; the spatial hash bucket size matches it. */
   private perception = 60;
@@ -137,7 +150,8 @@ export class World {
 
   seed() {
     const { width: W, height: H } = this;
-    const minSide = Math.min(W, H);
+    const minSide = Math.min(W, this.viewHeight);
+    const cy0 = this.viewCenterY;
     const baseLength = clamp(minSide * 0.44, 170, 430);
     const sharkCount = this.sharkSpecs.length;
 
@@ -149,7 +163,7 @@ export class World {
       const a = (i / sharkCount) * TAU + rand(-0.4, 0.4);
       const orbitDir: 1 | -1 = i % 2 === 0 ? 1 : -1;
       const x = W / 2 + Math.cos(a) * orbitRadius * (W / minSide) * 0.9;
-      const y = H / 2 + Math.sin(a) * orbitRadius;
+      const y = cy0 + Math.sin(a) * orbitRadius;
       const heading = a + (orbitDir * Math.PI) / 2;
       const nodes = new Float32Array(SHARK_NODES * 2);
       const seg = length / (SHARK_NODES - 1);
@@ -459,9 +473,10 @@ export class World {
 
   private stepSharks(dt: number) {
     const { sharks, width: W, height: H, time } = this;
-    const minSide = Math.min(W, H);
+    const viewH = this.viewHeight;
+    const minSide = Math.min(W, viewH);
     const cxW = W / 2;
-    const cyW = H / 2;
+    const cyW = this.viewCenterY;
 
     for (const sh of sharks) {
       const L = sh.length;
@@ -488,7 +503,8 @@ export class World {
       const t = sh.target;
       let hunting = false;
       let closing = 0;
-      if (t && t.alive && sh.hunger > 0.3) {
+      const outside = Math.max(0, Math.abs(hy - cyW) - viewH * 0.35);
+      if (t && t.alive && sh.hunger > 0.3 && outside < viewH * 0.25) {
         // Pursuit: aim at where the fish is about to be.
         const tx = t.x + t.vx * 0.35 - hx;
         const ty = t.y + t.vy * 0.35 - hy;
@@ -509,6 +525,14 @@ export class World {
         dy += ((rx / r) * sh.orbitDir + (ry / r) * radial * 0.9) * 0.55;
       }
 
+      // Off the reader's screen: give up the chase and swim back toward it.
+      if (outside > 0) {
+        const w = clamp(outside / (viewH * 0.5), 0, 1) * 2.4;
+        const d = Math.hypot(cxW - hx, cyW - hy) || 1;
+        dx += ((cxW - hx) / d) * w;
+        dy += ((cyW - hy) / d) * w;
+      }
+
       // Give other sharks room.
       for (const other of sharks) {
         if (other === sh) continue;
@@ -527,7 +551,7 @@ export class World {
 
       // Keep the headline mostly clear: a soft elliptical no-swim zone.
       const ex = (hx - cxW) / (W * 0.3);
-      const ey = (hy - cyW) / (H * 0.16);
+      const ey = (hy - cyW) / (viewH * 0.16);
       const e2 = ex * ex + ey * ey;
       if (e2 < 1) {
         const e = Math.sqrt(e2) || 1e-3;
@@ -557,7 +581,9 @@ export class World {
       sh.turn += (turned / dt - sh.turn) * Math.min(1, dt * 3);
 
       const cruise = 30 + L * 0.04;
-      const targetSpeed = hunting ? cruise * (1.45 + closing * 1.5) : cruise;
+      // Swim faster the farther off-screen, so a long scroll doesn't leave the view empty for long.
+      const commute = 1 + 4 * clamp(outside / viewH, 0, 1);
+      const targetSpeed = hunting ? cruise * (1.45 + closing * 1.5) : cruise * commute;
       sh.speed += (targetSpeed - sh.speed) * Math.min(1, dt * 1.1);
       sh.phase += dt * (2 + sh.speed / 24);
 

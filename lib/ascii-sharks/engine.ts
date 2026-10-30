@@ -40,6 +40,8 @@ export class OceanEngine {
     window.addEventListener("pointerdown", this.onPointerDown, { passive: true });
     document.documentElement.addEventListener("pointerleave", this.onPointerLeave);
     window.addEventListener("blur", this.onPointerLeave);
+    window.addEventListener("scroll", this.updateView, { passive: true });
+    window.addEventListener("resize", this.updateView, { passive: true });
 
     this.resize();
     // Canvas text can't trigger a webfont load; once the mono face is in, redraw.
@@ -59,12 +61,24 @@ export class OceanEngine {
     window.removeEventListener("pointerdown", this.onPointerDown);
     document.documentElement.removeEventListener("pointerleave", this.onPointerLeave);
     window.removeEventListener("blur", this.onPointerLeave);
+    window.removeEventListener("scroll", this.updateView);
+    window.removeEventListener("resize", this.updateView);
   }
+
+  /** Tell the world which slice of the canvas is on screen. */
+  private updateView = () => {
+    const rect = this.canvas.getBoundingClientRect();
+    const top = Math.max(0, -rect.top);
+    const bottom = Math.min(rect.height, window.innerHeight - rect.top);
+    this.world.view.top = top;
+    this.world.view.height = Math.max(0, bottom - top);
+  };
 
   private resize() {
     const rect = this.canvas.getBoundingClientRect();
     if (rect.width < 1 || rect.height < 1) return;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    this.updateView();
     this.renderer.resize(rect.width, rect.height, dpr);
     this.world.resize(rect.width, rect.height, this.renderer.cellWidth, this.renderer.cellHeight);
     if (this.reducedMotion.matches) this.drawStill();

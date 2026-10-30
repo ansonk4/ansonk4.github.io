@@ -164,6 +164,10 @@ img {
   opacity: 0.26;
 }
 
+:root[data-sharks="off"] .ascii-sharks {
+  display: none;
+}
+
 .ascii-sharks ~ .site-canvas {
   z-index: 1;
   background: transparent;

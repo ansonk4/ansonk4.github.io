@@ -48,6 +48,9 @@ export class OceanEngine {
     document.fonts?.load(`600 16px ${getComputedStyle(canvas).fontFamily}`).then(() => {
       if (!this.disposed && this.reducedMotion.matches) this.drawStill();
     });
+    // Paint the first frame now rather than on the next animation frame, which can
+    // wait behind the page's own startup work (local change).
+    if (!this.reducedMotion.matches) this.renderer.render(this.world, STEP);
     this.schedule();
   }
 

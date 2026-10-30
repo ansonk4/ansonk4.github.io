@@ -4,12 +4,13 @@ import { education } from "@/content/education.mdx";
 import { publications } from "@/content/publications.mdx";
 import { settings } from "@/content/settings";
 import { teaching } from "@/content/teaching.mdx";
-import { AsciiSharks, SharksToggle } from "@/components/AsciiSharks";
+import { AsciiSharks } from "@/components/AsciiSharks";
 import { CvSection } from "@/components/CvSection";
 import { EducationSection } from "@/components/EducationSection";
 import { Hero } from "@/components/Hero";
 import { PublicationsSection } from "@/components/PublicationsSection";
 import { RandomHeroPanel } from "@/components/RandomHeroPanel";
+import { SharksToggle } from "@/components/SharksToggle";
 import { SkylineFooter } from "@/components/SkylineFooter";
 import { ThemeToggle } from "@/components/ThemeToggle";
 

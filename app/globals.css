@@ -146,7 +146,8 @@ img {
 }
 
 /* Covers the whole page and scrolls with it. */
-.ascii-sharks {
+.ascii-sharks,
+.ascii-boids {
   position: absolute;
   inset: 0;
   z-index: 0;
@@ -164,7 +165,18 @@ img {
   opacity: 0.26;
 }
 
-.ascii-sharks ~ .site-canvas {
+/* The flock is sparser than the sharks, so it can sit a little darker. */
+.ascii-boids {
+  opacity: 0.4;
+}
+
+:root:not([data-theme="dark"]) .ascii-boids {
+  filter: invert(1);
+  opacity: 0.34;
+}
+
+.ascii-sharks ~ .site-canvas,
+.ascii-boids ~ .site-canvas {
   z-index: 1;
   background: transparent;
 }
@@ -217,6 +229,7 @@ img {
 
 @media print {
   .ascii-sharks,
+  .ascii-boids,
   .sharks-toggle {
     display: none;
   }

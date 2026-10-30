@@ -28,8 +28,8 @@ function readEnabled() {
   }
 }
 
-/** Whether the animation is on, kept in sync between the ocean and its toggle. */
-function useSharksEnabled() {
+/** Whether the background animation is on, kept in sync between the background and its toggle. */
+export function useSharksEnabled() {
   const [enabled, setEnabled] = useState<boolean | null>(null);
 
   useEffect(() => {

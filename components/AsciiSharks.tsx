@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import type { SharkKind, SharkSpec } from "@/lib/ascii-sharks/world";
 
 const STORAGE_KEY = "sharks";
+const CHANGE_EVENT = "sharks-change";
 const KINDS: SharkKind[] = ["classic", "hammerhead", "zebra", "tiger", "greathammer", "mako", "thresher", "nurse"];
-const SIZES = [1, 0.88, 0.8, 0.72];
+// The ocean covers the whole page, so a few more sharks than one screen would need.
+const SIZES = [1, 0.9, 0.82, 0.76, 0.7];
 
 /** A different mix of species on every visit, biggest first. */
 function pickSharks(): SharkSpec[] {
@@ -17,30 +19,33 @@ function pickSharks(): SharkSpec[] {
   return SIZES.map((size, i) => ({ kind: kinds[i], size }));
 }
 
-function WaveIcon() {
-  return (
-    <svg className="sharks-icon" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M2 9c2.5-2 4.5-2 7 0s4.5 2 7 0 4.5-2 6 0" />
-      <path d="M2 15c2.5-2 4.5-2 7 0s4.5 2 7 0 4.5-2 6 0" />
-      <path className="sharks-icon-slash" d="M4 21 20 3" />
-    </svg>
-  );
+function readEnabled() {
+  try {
+    return window.localStorage.getItem(STORAGE_KEY) !== "off";
+  } catch {
+    // Storage can be blocked; default to on.
+    return true;
+  }
 }
 
-/** Animated ASCII ocean behind the page, with a toggle beside the theme switch. */
-export function AsciiSharks() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+/** Whether the animation is on, kept in sync between the ocean and its toggle. */
+function useSharksEnabled() {
   const [enabled, setEnabled] = useState<boolean | null>(null);
 
   useEffect(() => {
-    let stored: string | null = null;
-    try {
-      stored = window.localStorage.getItem(STORAGE_KEY);
-    } catch {
-      // Storage can be blocked; default to on.
-    }
-    setEnabled(stored !== "off");
+    const sync = () => setEnabled(readEnabled());
+    sync();
+    window.addEventListener(CHANGE_EVENT, sync);
+    return () => window.removeEventListener(CHANGE_EVENT, sync);
   }, []);
+
+  return enabled;
+}
+
+/** Animated ASCII ocean behind the page; it scrolls with the content. */
+export function AsciiSharks() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const enabled = useSharksEnabled();
 
   useEffect(() => {
     if (!enabled) return;
@@ -61,29 +66,42 @@ export function AsciiSharks() {
     };
   }, [enabled]);
 
+  return enabled ? <canvas ref={canvasRef} className="ascii-sharks" aria-hidden="true" /> : null;
+}
+
+function WaveIcon() {
+  return (
+    <svg className="sharks-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M2 9c2.5-2 4.5-2 7 0s4.5 2 7 0 4.5-2 6 0" />
+      <path d="M2 15c2.5-2 4.5-2 7 0s4.5 2 7 0 4.5-2 6 0" />
+      <path className="sharks-icon-slash" d="M4 21 20 3" />
+    </svg>
+  );
+}
+
+export function SharksToggle() {
+  const enabled = useSharksEnabled();
+
   const toggle = () => {
-    const next = !enabled;
     try {
-      window.localStorage.setItem(STORAGE_KEY, next ? "on" : "off");
+      window.localStorage.setItem(STORAGE_KEY, enabled === false ? "on" : "off");
     } catch {
-      // The toggle should still work if storage is blocked.
+      // Without storage the choice can't be kept, so leave the animation as it is.
+      return;
     }
-    setEnabled(next);
+    window.dispatchEvent(new Event(CHANGE_EVENT));
   };
 
   return (
-    <>
-      {enabled && <canvas ref={canvasRef} className="ascii-sharks" aria-hidden="true" />}
-      <button
-        className="sharks-toggle"
-        type="button"
-        onClick={toggle}
-        aria-label={enabled === false ? "Turn on background animation" : "Turn off background animation"}
-        aria-pressed={enabled !== false}
-        data-off={enabled === false ? "" : undefined}
-      >
-        <WaveIcon />
-      </button>
-    </>
+    <button
+      className="sharks-toggle"
+      type="button"
+      onClick={toggle}
+      aria-label={enabled === false ? "Turn on background animation" : "Turn off background animation"}
+      aria-pressed={enabled !== false}
+      data-off={enabled === false ? "" : undefined}
+    >
+      <WaveIcon />
+    </button>
   );
 }

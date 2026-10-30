@@ -169,6 +169,28 @@ img {
   background: transparent;
 }
 
+/* Game of Life board: same placement as the ocean, drawn in the page's own ink. */
+.ascii-life {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  opacity: 0.26;
+  pointer-events: none;
+}
+
+:root[data-theme="dark"] .ascii-life {
+  opacity: 0.32;
+}
+
+.ascii-life ~ .site-canvas {
+  z-index: 1;
+  background: transparent;
+}
+
 .sharks-toggle {
   position: absolute;
   top: clamp(14px, 2.4vw, 28px);
@@ -217,6 +239,7 @@ img {
 
 @media print {
   .ascii-sharks,
+  .ascii-life,
   .sharks-toggle {
     display: none;
   }

@@ -4,6 +4,7 @@ import { education } from "@/content/education.mdx";
 import { publications } from "@/content/publications.mdx";
 import { settings } from "@/content/settings";
 import { teaching } from "@/content/teaching.mdx";
+import { AsciiSharks, SharksToggle } from "@/components/AsciiSharks";
 import { CvSection } from "@/components/CvSection";
 import { EducationSection } from "@/components/EducationSection";
 import { Hero } from "@/components/Hero";
@@ -15,8 +16,10 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 export default function Home() {
   return (
     <main className="site-page">
+      {settings.showSharks && <AsciiSharks />}
       <div className="site-canvas">
         <ThemeToggle />
+        {settings.showSharks && <SharksToggle />}
         <Hero profile={profile}>
           <Biography />
         </Hero>

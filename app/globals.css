@@ -141,6 +141,35 @@ img {
   box-shadow: none;
 }
 
+.ascii-sharks {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  opacity: 0.32;
+  pointer-events: none;
+}
+
+/* The ocean is drawn for a dark page; invert it so it reads as ink on paper. */
+:root:not([data-theme="dark"]) .ascii-sharks {
+  filter: invert(1) hue-rotate(180deg);
+  opacity: 0.26;
+}
+
+.ascii-sharks ~ .site-canvas {
+  z-index: 1;
+  background: transparent;
+}
+
+@media print {
+  .ascii-sharks {
+    display: none;
+  }
+}
+
 .not-found-page {
   justify-content: center;
   padding-bottom: clamp(38px, 5vw, 82px);

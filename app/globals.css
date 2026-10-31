@@ -47,6 +47,12 @@
   --paper-icon-blend-mode: multiply;
   --skyline-filter: saturate(0.85) contrast(1.02);
   --skyline-blend-mode: multiply;
+  --glass-bg: rgba(255, 255, 255, 0.44);
+  --glass-border: rgba(255, 255, 255, 0.75);
+  --glass-edge: rgba(17, 17, 17, 0.08);
+  --glass-highlight: rgba(255, 255, 255, 0.9);
+  --glass-shadow: 0 10px 32px rgba(17, 17, 17, 0.08), 0 1px 3px rgba(17, 17, 17, 0.05);
+  --glass-sheen: linear-gradient(135deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.08) 42%, rgba(255, 255, 255, 0) 60%, rgba(255, 255, 255, 0.22) 100%);
   color-scheme: var(--color-scheme);
   background: var(--color-page);
 }
@@ -71,6 +77,12 @@
   --paper-icon-filter: invert(1) hue-rotate(180deg) contrast(0.95) saturate(0.9);
   --paper-icon-blend-mode: normal;
   --skyline-blend-mode: normal;
+  --glass-bg: rgba(28, 26, 23, 0.5);
+  --glass-border: rgba(241, 234, 223, 0.14);
+  --glass-edge: rgba(0, 0, 0, 0.35);
+  --glass-highlight: rgba(241, 234, 223, 0.18);
+  --glass-shadow: 0 12px 36px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.25);
+  --glass-sheen: linear-gradient(135deg, rgba(241, 234, 223, 0.09) 0%, rgba(241, 234, 223, 0.02) 42%, rgba(241, 234, 223, 0) 60%, rgba(241, 234, 223, 0.05) 100%);
 }
 
 * {
@@ -217,6 +229,117 @@ img {
 
 .sharks-toggle[data-off] .sharks-icon-slash {
   opacity: 1;
+}
+
+/*
+ * Liquid glass: frosted panels behind content so the sharks blur as they
+ * swim under text and buttons. Only applies while the sharks are showing.
+ */
+:root:not([data-sharks="off"]) .ascii-sharks ~ .site-canvas {
+  --glass-pad-y: clamp(18px, 2.4vw, 28px);
+  --glass-pad-x: clamp(16px, 2.4vw, 30px);
+}
+
+:root:not([data-sharks="off"]) .ascii-sharks ~ .site-canvas :is(
+    .intro-panel,
+    .publications,
+    .education,
+    .cv-section,
+    .playground-quote,
+    .research-asset,
+    .theme-toggle,
+    .sharks-toggle
+  ) {
+  background-color: var(--glass-bg);
+  background-image: var(--glass-sheen);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    inset 0 -1px 0 var(--glass-edge),
+    var(--glass-shadow);
+  -webkit-backdrop-filter: blur(10px) saturate(1.5);
+  backdrop-filter: blur(10px) saturate(1.5);
+  transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+/* Pad the panels outward so the text stays where it was. */
+:root:not([data-sharks="off"]) .ascii-sharks ~ .site-canvas :is(
+    .intro-panel,
+    .publications,
+    .education,
+    .cv-section,
+    .playground-quote
+  ) {
+  padding: var(--glass-pad-y) var(--glass-pad-x);
+  margin-inline: calc(-1 * var(--glass-pad-x));
+  width: auto;
+  border-radius: 20px;
+}
+
+:root:not([data-sharks="off"]) .ascii-sharks ~ .site-canvas .intro-panel {
+  margin-inline: 0;
+}
+
+:root:not([data-sharks="off"]) .ascii-sharks ~ .site-canvas .playground-quote {
+  width: min(calc(100% + 2 * var(--glass-pad-x)), 620px);
+  margin-inline: auto;
+}
+
+:root:not([data-sharks="off"]) .ascii-sharks ~ .site-canvas .research-asset {
+  border-radius: 20px;
+}
+
+:root:not([data-sharks="off"]) .ascii-sharks ~ .site-canvas :is(.theme-toggle, .sharks-toggle) {
+  border-radius: 999px;
+}
+
+:root:not([data-sharks="off"]) .ascii-sharks ~ .site-canvas :is(.theme-toggle, .sharks-toggle):hover {
+  background-color: var(--color-control-hover);
+}
+
+/*
+ * A blend mode anywhere in the canvas would make the whole canvas one
+ * isolated group, cutting the sharks out of the glass's backdrop. The
+ * canvas is already its own stacking context, so the skyline's multiply
+ * looks the same when kept inside its wrapper.
+ */
+:root:not([data-sharks="off"]) .ascii-sharks ~ .site-canvas .skyline-wrap {
+  isolation: isolate;
+}
+
+@media (max-width: 560px) {
+  :root:not([data-sharks="off"]) .ascii-sharks ~ .site-canvas {
+    --glass-pad-y: 16px;
+    --glass-pad-x: 14px;
+  }
+
+  :root:not([data-sharks="off"]) .ascii-sharks ~ .site-canvas :is(
+      .intro-panel,
+      .publications,
+      .education,
+      .cv-section,
+      .playground-quote
+    ) {
+    margin-inline: 0;
+    border-radius: 16px;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root:not([data-sharks="off"]) .ascii-sharks ~ .site-canvas :is(
+      .intro-panel,
+      .publications,
+      .education,
+      .cv-section,
+      .playground-quote,
+      .research-asset,
+      .theme-toggle,
+      .sharks-toggle
+    ) {
+    background-color: var(--color-page);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
 }
 
 @media print {

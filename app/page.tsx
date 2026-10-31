@@ -24,10 +24,12 @@ export default function Home() {
         <Hero profile={profile}>
           <Biography />
         </Hero>
-        <PublicationsSection publications={publications} />
-        <EducationSection education={education} />
-        <CvSection id="academic-service" title="Academic Service" items={academicService} />
-        <CvSection id="teaching" title="Teaching" items={teaching} />
+        <div className="content-sections">
+          <PublicationsSection publications={publications} />
+          <EducationSection education={education} />
+          <CvSection id="academic-service" title="Academic Service" items={academicService} />
+          <CvSection id="teaching" title="Teaching" items={teaching} />
+        </div>
         {settings.showMisc && <RandomHeroPanel className="hero-panel-bottom" />}
         {settings.showQuote && (
           <blockquote className="playground-quote">

@@ -445,6 +445,13 @@ img {
   opacity: 1;
 }
 
+/* Touch screens can't hover, so keep the copy icon visible on mobile. */
+@media (hover: none), (max-width: 820px) {
+  .email-icon-wrap {
+    opacity: 1;
+  }
+}
+
 .email-icon {
   width: 15px;
   height: 15px;

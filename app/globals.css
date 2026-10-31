@@ -290,8 +290,11 @@ img {
  * isolated group, cutting the sharks out of the glass's backdrop. The
  * canvas is already its own stacking context, so the skyline's multiply
  * looks the same when kept inside its wrapper.
+ *
+ * The same goes for each section: the paper icons' multiply would cut the
+ * sharks out of the Publications blur, so keep it inside the icon row.
  */
-:root:not([data-sharks="off"]) .ascii-sharks ~ .site-canvas .skyline-wrap {
+:root:not([data-sharks="off"]) .ascii-sharks ~ .site-canvas :is(.skyline-wrap, .paper-links) {
   isolation: isolate;
 }
 

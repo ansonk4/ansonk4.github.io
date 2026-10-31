@@ -311,6 +311,16 @@ export class AsciiRenderer {
   private hitV = 0;
   private hitDist = 0;
 
+  /**
+   * Rows drawn this frame and last frame (local change). The canvas spans the whole
+   * page, but only the band around the viewport is redrawn, so each frame's GPU work
+   * scales with the screen rather than the page.
+   */
+  private bandR0 = 0;
+  private bandR1 = -1;
+  private prevR0 = 0;
+  private prevR1 = -1;
+
   /** Cells holding a fish this frame (frame stamp); dots skip them. */
   private fishStamp = new Uint32Array(0);
   private frameId = 0;
@@ -390,6 +400,12 @@ export class AsciiRenderer {
       this.dotFreq[i] = 0.3 + hash3(col, row, 37) * 1.1;
     }
     this.paintBackground();
+    // Show the grid everywhere once; frames only touch the band near the viewport after this.
+    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.drawImage(this.bg, 0, 0);
+    this.prevR0 = 0;
+    this.prevR1 = -1;
   }
 
   private paintBackground() {
@@ -402,18 +418,35 @@ export class AsciiRenderer {
   }
 
   render(world: World, dt: number) {
-    const { ctx, dpr, cols, ch } = this;
+    const { ctx, dpr, cols, rows, ch } = this;
     if (cols === 0) return;
     const t = world.time;
+
+    // The viewport plus a margin, so a quick scroll still finds the ocean drawn.
+    const { top, height } = world.view;
+    const viewH = height > 0 ? height : this.height;
+    const margin = viewH * 0.5;
+    const r0 = clamp(Math.floor((top - margin) / ch), 0, rows - 1);
+    const r1 = clamp(Math.ceil((top + viewH + margin) / ch), 0, rows - 1);
+    this.bandR0 = r0;
+    this.bandR1 = r1;
 
     this.consumeEvents(world);
     this.rasterizeSharks(world.sharks, t);
     this.depositWake(world);
     this.diffuse(dt);
 
+    // Reset what was drawn last frame and what will be drawn now back to the bare grid.
+    // Rows that just left the band keep the plain grid, with no stale sharks on it.
+    const c0 = this.prevR1 >= this.prevR0 ? Math.min(r0, this.prevR0) : r0;
+    const c1 = this.prevR1 >= this.prevR0 ? Math.max(r1, this.prevR1) : r1;
+    this.prevR0 = r0;
+    this.prevR1 = r1;
+    const y0 = Math.max(0, Math.floor(c0 * ch * dpr));
+    const y1 = Math.min(this.canvas.height, Math.ceil((c1 + 1) * ch * dpr));
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    ctx.drawImage(this.bg, 0, 0);
+    ctx.clearRect(0, y0, this.canvas.width, y1 - y0);
+    ctx.drawImage(this.bg, 0, y0, this.canvas.width, y1 - y0, 0, y0, this.canvas.width, y1 - y0);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     this.markFish(world);
@@ -703,8 +736,8 @@ export class AsciiRenderer {
       const reach = L * 0.36;
       const c0 = Math.max(0, Math.floor((minX - reach) / cw));
       const c1 = Math.min(cols - 1, Math.floor((maxX + reach) / cw));
-      const r0 = Math.max(0, Math.floor((minY - reach) / ch));
-      const r1 = Math.min(rows - 1, Math.floor((maxY + reach) / ch));
+      const r0 = Math.max(this.bandR0, Math.floor((minY - reach) / ch));
+      const r1 = Math.min(this.bandR1, Math.floor((maxY + reach) / ch));
       if (c0 > c1 || r0 > r1) continue;
 
       const skipBeyond = reach + Math.hypot(cw, ch);
@@ -753,9 +786,9 @@ export class AsciiRenderer {
   }
 
   private drawSharks(t: number) {
-    const { ctx, cols, rows, cw, ch, sharkFlag, sharkShade, sharkKey, sharkDepth, sharkKind } = this;
-    const n = cols * rows;
-    for (let i = 0; i < n; i++) {
+    const { ctx, cols, cw, ch, sharkFlag, sharkShade, sharkKey, sharkDepth, sharkKind } = this;
+    const end = (this.bandR1 + 1) * cols;
+    for (let i = this.bandR0 * cols; i < end; i++) {
       const flag = sharkFlag[i];
       if (!flag) continue;
       const col = i % cols;
@@ -834,6 +867,8 @@ export class AsciiRenderer {
         if (!f.alive || (f.depth > 0.78 ? 0 : 1) !== pass) continue;
         const i = this.cellIndex(f.x, f.y);
         if (i < 0 || fishStamp[i] === frame || sharkFlag[i]) continue;
+        const row = (i / this.cols) | 0;
+        if (row < this.bandR0 || row > this.bandR1) continue;
         fishStamp[i] = frame;
         const glint = clamp(Math.abs(f.turn) / 3.5, 0, 1);
         const v = 0.3 + (0.4 * (f.depth - 0.55)) / 0.45 + 0.3 * Math.max(glint, f.alarm);
@@ -856,7 +891,8 @@ export class AsciiRenderer {
 
   private drawHeat() {
     const { ctx, heat, cols, cw, ch } = this;
-    for (let i = 0; i < heat.length; i++) {
+    const end = (this.bandR1 + 1) * cols;
+    for (let i = this.bandR0 * cols; i < end; i++) {
       const h = heat[i];
       if (h < 0.08) continue;
       const col = i % cols;
@@ -872,13 +908,14 @@ export class AsciiRenderer {
    * Dots are bucketed by colour/alpha so each bucket is one fillStyle.
    */
   private drawDots(t: number) {
-    const { ctx, cols, rows, cw, ch, dotKind, dotPhase, dotFreq, energy, sharkFlag, sharkShadow, fishStamp, frameId } = this;
+    const { ctx, cols, cw, ch, dotKind, dotPhase, dotFreq, energy, sharkFlag, sharkShadow, fishStamp, frameId } = this;
     const { bucketOf, bucketOrder, bucketCounts } = this;
-    const n = cols * rows;
+    const begin = this.bandR0 * cols;
+    const n = (this.bandR1 + 1) * cols;
     const SKIP = bucketCounts.length - 1;
     bucketCounts.fill(0);
 
-    for (let i = 0; i < n; i++) {
+    for (let i = begin; i < n; i++) {
       const e = energy[i];
       const kind = dotKind[i];
       if (sharkFlag[i] || fishStamp[i] === frameId || (kind === 0 && e < 0.45)) {
@@ -907,7 +944,7 @@ export class AsciiRenderer {
     const starts = new Int32Array(bucketCounts.length);
     for (let b = 1; b < bucketCounts.length; b++) starts[b] = starts[b - 1] + bucketCounts[b - 1];
     const cursor = starts.slice();
-    for (let i = 0; i < n; i++) {
+    for (let i = begin; i < n; i++) {
       const b = bucketOf[i];
       if (b !== SKIP) bucketOrder[cursor[b]++] = i;
     }

@@ -4,6 +4,12 @@ import { World, type SharkSpec } from "./world";
 
 const STEP = 1 / 60;
 const MAX_STEPS = 4;
+/**
+ * Draw at most this often (local change). The ocean moves a whole cell at a time, so
+ * 30 frames a second looks the same as 60, and it halves the GPU work: every new
+ * frame also makes the liquid glass blur repaint the sharks behind it.
+ */
+const FRAME_INTERVAL = 1000 / 30;
 
 /**
  * Wires World + AsciiRenderer to a canvas: fixed-timestep loop, resize,
@@ -95,6 +101,11 @@ export class OceanEngine {
   }
 
   private frame = (now: number) => {
+    // A little slack so a 60 Hz display reliably draws every other frame.
+    if (now - this.last < FRAME_INTERVAL - 4) {
+      this.raf = requestAnimationFrame(this.frame);
+      return;
+    }
     const dt = Math.min(0.1, (now - this.last) / 1000);
     this.last = now;
     this.acc += dt;

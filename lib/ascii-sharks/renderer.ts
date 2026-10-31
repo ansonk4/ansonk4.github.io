@@ -254,9 +254,9 @@ export interface GlassPatch {
 }
 
 /** How soft the sharks get under the glass, in cells. */
-const GLASS_BLUR_CELLS = 0.35;
+const GLASS_BLUR_CELLS = 0.55;
 /** How much of the sharp shark still shows through the glass, so its glyphs stay readable. */
-const GLASS_SHARP = 0.35;
+const GLASS_SHARP = 0.12;
 
 function inTriangle(
   px: number, py: number,

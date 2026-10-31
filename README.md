@@ -1,3 +1,3 @@
-handcrafted with blood, sweat, tears, and Codex :)
+handcrafted with blood, sweat, tears, Codex and Claude :)
 
-background sharks borrowed from [ascii sharks](https://github.com/stackedlol/ascii-sharks) 🦈
+background sharks borrowed from [ascii sharks](https://github.com/stackedlol/ascii-sharks)

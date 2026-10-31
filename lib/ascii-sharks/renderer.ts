@@ -249,7 +249,7 @@ function inTriangle(
 }
 
 /** Visible dark-grey cell grid, snapped to device pixels. Shared with the sidebar backdrop. */
-export function paintGrid(g: CanvasRenderingContext2D, W: number, H: number, cw: number, ch: number, dpr: number) {
+export function paintGrid(g: CanvasRenderingContext2D, W: number, H: number, cw: number, ch: number, dpr: number, top = 0) {
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.strokeStyle = "rgba(255,255,255,0.055)";
   g.lineWidth = 1;
@@ -259,8 +259,8 @@ export function paintGrid(g: CanvasRenderingContext2D, W: number, H: number, cw:
     g.moveTo(x, 0);
     g.lineTo(x, H * dpr);
   }
-  for (let r = 0; r <= Math.ceil(H / ch); r++) {
-    const y = Math.round(r * ch * dpr) + 0.5;
+  for (let r = Math.ceil(top / ch); r <= Math.ceil((top + H) / ch); r++) {
+    const y = Math.round(r * ch * dpr) + 0.5 - Math.round(top * dpr);
     g.moveTo(0, y);
     g.lineTo(W * dpr, y);
   }
@@ -273,6 +273,8 @@ export class AsciiRenderer {
   private dpr = 1;
   private width = 0;
   private height = 0;
+  private viewHeight = 0;
+  private viewTop = 0;
   private cw = 12;
   private ch = 18;
   private cols = 0;
@@ -312,14 +314,11 @@ export class AsciiRenderer {
   private hitDist = 0;
 
   /**
-   * Rows drawn this frame and last frame (local change). The canvas spans the whole
-   * page, but only the band around the viewport is redrawn, so each frame's GPU work
-   * scales with the screen rather than the page.
+   * World rows covered by the viewport-sized canvas, including a scroll margin.
+   * Field arrays retain page coordinates so offscreen wakes keep evolving normally.
    */
   private bandR0 = 0;
   private bandR1 = -1;
-  private prevR0 = 0;
-  private prevR1 = -1;
 
   /** Cells holding a fish this frame (frame stamp); dots skip them. */
   private fishStamp = new Uint32Array(0);
@@ -356,11 +355,13 @@ export class AsciiRenderer {
     if (family) this.fontFamily = family;
   }
 
-  resize(width: number, height: number, dpr: number) {
+  resize(width: number, height: number, dpr: number, viewHeight = height) {
+    if (width === this.width && height === this.height && dpr === this.dpr && viewHeight === this.viewHeight) return;
     const prevCols = this.cols;
     const prevRows = this.rows;
     this.width = width;
     this.height = height;
+    this.viewHeight = viewHeight;
     this.dpr = dpr;
     this.cw = clamp(Math.round(width / 124), 8, 13);
     this.ch = Math.round(this.cw * 1.45);
@@ -368,7 +369,7 @@ export class AsciiRenderer {
     this.rows = Math.ceil(height / this.ch);
 
     this.canvas.width = Math.round(width * dpr);
-    this.canvas.height = Math.round(height * dpr);
+    this.canvas.height = Math.round(viewHeight * dpr);
     this.bg.width = this.canvas.width;
     this.bg.height = this.canvas.height;
 
@@ -399,55 +400,50 @@ export class AsciiRenderer {
       this.dotPhase[i] = hash3(col, row, 23) * Math.PI * 2;
       this.dotFreq[i] = 0.3 + hash3(col, row, 37) * 1.1;
     }
+    this.setView(this.viewTop, true);
+  }
+
+  setView(top: number, force = false) {
+    // Integer device-pixel translation preserves the glyph rasterization on scroll.
+    top = Math.round(top * this.dpr) / this.dpr;
+    if (!force && top === this.viewTop) return;
+    this.viewTop = top;
+    this.bandR0 = Math.max(0, Math.floor(top / this.ch) - 1);
+    this.bandR1 = Math.min(this.rows - 1, Math.ceil((top + this.viewHeight) / this.ch));
     this.paintBackground();
-    // Show the grid everywhere once; frames only touch the band near the viewport after this.
-    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.ctx.drawImage(this.bg, 0, 0);
-    this.prevR0 = 0;
-    this.prevR1 = -1;
+  }
+
+  destroy() {
+    this.canvas.width = this.canvas.height = 0;
+    this.bg.width = this.bg.height = 0;
   }
 
   private paintBackground() {
     const g = this.bg.getContext("2d");
     if (!g) return;
-    const { width: W, height: H, dpr, cw, ch } = this;
+    const { width: W, viewHeight: H, dpr, cw, ch, viewTop } = this;
     g.setTransform(1, 0, 0, 1, 0, 0);
     g.clearRect(0, 0, this.bg.width, this.bg.height);
-    paintGrid(g, W, H, cw, ch, dpr);
+    paintGrid(g, W, H, cw, ch, dpr, viewTop);
   }
 
   render(world: World, dt: number) {
-    const { ctx, dpr, cols, rows, ch } = this;
+    const { ctx, dpr, cols, ch } = this;
     if (cols === 0) return;
     const t = world.time;
 
-    // The viewport plus a margin, so a quick scroll still finds the ocean drawn.
-    const { top, height } = world.view;
-    const viewH = height > 0 ? height : this.height;
-    const margin = viewH * 0.5;
-    const r0 = clamp(Math.floor((top - margin) / ch), 0, rows - 1);
-    const r1 = clamp(Math.ceil((top + viewH + margin) / ch), 0, rows - 1);
-    this.bandR0 = r0;
-    this.bandR1 = r1;
-
-    this.consumeEvents(world);
+    // A scroll-only repaint must not change wake strength, heat, or simulation time.
+    if (dt > 0) this.consumeEvents(world);
     this.rasterizeSharks(world.sharks, t);
-    this.depositWake(world);
-    this.diffuse(dt);
+    if (dt > 0) {
+      this.depositWake(world);
+      this.diffuse(dt);
+    }
 
-    // Reset what was drawn last frame and what will be drawn now back to the bare grid.
-    // Rows that just left the band keep the plain grid, with no stale sharks on it.
-    const c0 = this.prevR1 >= this.prevR0 ? Math.min(r0, this.prevR0) : r0;
-    const c1 = this.prevR1 >= this.prevR0 ? Math.max(r1, this.prevR1) : r1;
-    this.prevR0 = r0;
-    this.prevR1 = r1;
-    const y0 = Math.max(0, Math.floor(c0 * ch * dpr));
-    const y1 = Math.min(this.canvas.height, Math.ceil((c1 + 1) * ch * dpr));
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, y0, this.canvas.width, y1 - y0);
-    ctx.drawImage(this.bg, 0, y0, this.canvas.width, y1 - y0, 0, y0, this.canvas.width, y1 - y0);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    ctx.drawImage(this.bg, 0, 0);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, -Math.round(this.viewTop * dpr));
 
     this.markFish(world);
     this.drawDots(t);

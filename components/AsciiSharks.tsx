@@ -7,7 +7,8 @@ const oceanScript = readFileSync(path.join(process.cwd(), "lib/ascii-sharks/asci
   .replace(/<\/script/gi, "<\\/script");
 
 /**
- * Animated ASCII ocean behind the page; it scrolls with the content.
+ * Animated ASCII ocean behind the page; a viewport-sized canvas draws the
+ * visible slice of a page-sized world, so the ocean scrolls with the content.
  * The engine is inlined right after the canvas, so it starts as soon as the
  * page first paints, without waiting for any download or for React.
  */

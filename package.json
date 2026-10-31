@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test:sharks": "node --test tests/ascii-sharks.test.cjs",
     "sharks": "esbuild lib/ascii-sharks/boot.ts --bundle --minify --format=iife --target=es2017 --outfile=lib/ascii-sharks/ascii-sharks.min.js --log-level=warning",
     "predev": "npm run sharks",
     "dev": "next dev",

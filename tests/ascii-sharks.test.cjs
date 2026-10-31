@@ -26,7 +26,7 @@ function setup({ reduced = false, width = 1440, height = 6000, viewportHeight = 
       emit(type, event = {}) { for (const fn of listeners.get(type) || []) fn(event); },
     };
   };
-  const page = { getBoundingClientRect: () => ({ width, height, top: -scrollY, left: 0 }) };
+  const page = { getBoundingClientRect: () => ({ width, height, top: -scrollY, left: 0 }), querySelector: () => null };
   function makeCanvas() {
     const calls = [];
     const ctx = new Proxy({}, { get(target, key) { return target[key] ?? ((...args) => calls.push([key, ...args])); } });
@@ -34,7 +34,7 @@ function setup({ reduced = false, width = 1440, height = 6000, viewportHeight = 
   }
   const canvas = makeCanvas();
   const motion = Object.assign(eventTarget(), { matches: reduced });
-  const document = Object.assign(eventTarget(), { hidden: false, documentElement: eventTarget(), createElement: makeCanvas });
+  const document = Object.assign(eventTarget(), { hidden: false, documentElement: Object.assign(eventTarget(), { dataset: {} }), createElement: makeCanvas, querySelectorAll: () => [] });
   const window = Object.assign(eventTarget(), { innerHeight: viewportHeight, devicePixelRatio: dpr, matchMedia: () => motion });
   class Observer {
     constructor(fn) { this.fn = fn; observers.push(this); }

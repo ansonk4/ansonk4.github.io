@@ -1,5 +1,5 @@
 // Vendored from https://github.com/stackedlol/ascii-sharks (a0074c1), MIT License; see ./LICENSE.
-import { AsciiRenderer } from "./renderer";
+import { AsciiRenderer, type GlassPatch } from "./renderer";
 import { World, type SharkSpec } from "./world";
 
 const STEP = 1 / 60;
@@ -10,6 +10,16 @@ const MAX_STEPS = 4;
  * frame also makes the liquid glass blur repaint the sharks behind it.
  */
 const FRAME_INTERVAL = 1000 / 30;
+
+/**
+ * Liquid glass (local change): the pieces of content that sit on a frosted patch, matching
+ * the selectors in app/globals.css. The renderer frosts the ocean under them itself and
+ * the engine sets <html data-canvas-glass>, which turns off the CSS backdrop-filter.
+ */
+const GLASS_PANELS = ".intro-panel, .content-sections, .playground-quote, .research-asset";
+const GLASS_BUTTONS = ".theme-toggle, .sharks-toggle";
+/** How far the round buttons' patch reaches past the button (the CSS `inset: -6px`). */
+const BUTTON_REACH = 6;
 
 /**
  * Wires World + AsciiRenderer to a canvas: fixed-timestep loop, resize,
@@ -26,6 +36,7 @@ export class OceanEngine {
   private resizeObserver: ResizeObserver;
   private intersectionObserver: IntersectionObserver;
   private disposed = false;
+  private glassObserver: ResizeObserver;
 
   constructor(private canvas: HTMLCanvasElement, sharks?: SharkSpec[]) {
     this.world = new World(sharks);
@@ -40,6 +51,9 @@ export class OceanEngine {
       this.schedule();
     });
     this.intersectionObserver.observe(canvas);
+    // Content that changes size can move the glass without resizing the page.
+    this.glassObserver = new ResizeObserver(() => this.measureGlass());
+    document.querySelectorAll(`${GLASS_PANELS}, ${GLASS_BUTTONS}`).forEach((el) => this.glassObserver.observe(el));
 
     this.reducedMotion.addEventListener("change", this.onMotionPreference);
     window.addEventListener("pointermove", this.onPointerMove, { passive: true });
@@ -52,7 +66,10 @@ export class OceanEngine {
     this.resize();
     // Canvas text can't trigger a webfont load; once the mono face is in, redraw.
     document.fonts?.load(`600 16px ${getComputedStyle(canvas).fontFamily}`).then(() => {
-      if (!this.disposed && this.reducedMotion.matches) this.drawStill();
+      if (this.disposed) return;
+      // The web font can move the content, and the glass with it.
+      this.measureGlass();
+      if (this.reducedMotion.matches) this.drawStill();
     });
     // Paint the first frame now rather than on the next animation frame, which can
     // wait behind the page's own startup work (local change).
@@ -65,6 +82,8 @@ export class OceanEngine {
     cancelAnimationFrame(this.raf);
     this.resizeObserver.disconnect();
     this.intersectionObserver.disconnect();
+    this.glassObserver.disconnect();
+    delete document.documentElement.dataset.canvasGlass;
     this.reducedMotion.removeEventListener("change", this.onMotionPreference);
     window.removeEventListener("pointermove", this.onPointerMove);
     window.removeEventListener("pointerdown", this.onPointerDown);
@@ -90,7 +109,35 @@ export class OceanEngine {
     this.updateView();
     this.renderer.resize(rect.width, rect.height, dpr);
     this.world.resize(rect.width, rect.height, this.renderer.cellWidth, this.renderer.cellHeight);
+    this.measureGlass();
     if (this.reducedMotion.matches) this.drawStill();
+  }
+
+  /** Find where the glass patches sit on the canvas and hand them to the renderer. */
+  private measureGlass() {
+    if (this.disposed) return;
+    const site = this.canvas.parentElement?.querySelector<HTMLElement>(".site-canvas");
+    const patches: GlassPatch[] = [];
+    if (site) {
+      const feather = parseFloat(getComputedStyle(site).getPropertyValue("--glass-feather")) || 0;
+      const origin = this.canvas.getBoundingClientRect();
+      const add = (el: Element, reach: number, round: boolean) => {
+        const r = el.getBoundingClientRect();
+        if (r.width < 1 || r.height < 1) return;
+        patches.push({
+          x: r.left - origin.left - reach,
+          y: r.top - origin.top - reach,
+          w: r.width + reach * 2,
+          h: r.height + reach * 2,
+          round,
+          feather,
+        });
+      };
+      site.querySelectorAll(GLASS_PANELS).forEach((el) => add(el, feather, false));
+      site.querySelectorAll(GLASS_BUTTONS).forEach((el) => add(el, BUTTON_REACH, true));
+    }
+    this.renderer.setGlass(patches);
+    document.documentElement.dataset.canvasGlass = "";
   }
 
   private schedule() {

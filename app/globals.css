@@ -282,6 +282,24 @@ img {
 }
 
 /*
+ * Once the ocean script runs, it frosts the water under these patches inside its own
+ * canvas (lib/ascii-sharks/renderer.ts): no grid, fish or wake there, and the sharks pass
+ * through as a soft blur. That replaces the backdrop-filter, which re-blurred everything
+ * behind every patch on every frame and was most of the page's GPU cost.
+ */
+:root[data-canvas-glass]:not([data-sharks="off"]) .ascii-sharks ~ .site-canvas :is(
+    .intro-panel,
+    .content-sections,
+    .playground-quote,
+    .research-asset,
+    .theme-toggle,
+    .sharks-toggle
+  )::before {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/*
  * A blend mode anywhere in the canvas would make the whole canvas one
  * isolated group, cutting the sharks out of the glass's backdrop. The
  * canvas is already its own stacking context, so the skyline's multiply

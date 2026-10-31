@@ -236,6 +236,26 @@ const SHAPES: Record<SharkKind, SharkShape> = {
 
 const KINDS = Object.keys(SHAPES) as SharkKind[];
 
+/**
+ * One liquid glass patch behind the page's content, in canvas CSS pixels (local change).
+ * Under a patch the ocean drops its grid, fish and wake, and the sharks swim through as a
+ * soft blur. The renderer draws that itself, so the page needs no CSS backdrop-filter,
+ * which re-blurred everything behind every patch on every frame.
+ */
+export interface GlassPatch {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  /** Round patch fading out from the middle (the corner buttons) instead of feathered edges. */
+  round: boolean;
+  /** How far the glass fades out at each edge, in CSS px. */
+  feather: number;
+}
+
+/** How soft the sharks get under the glass, in cells. */
+const GLASS_BLUR_CELLS = 0.75;
+
 function inTriangle(
   px: number, py: number,
   ax: number, ay: number, bx: number, by: number, cx: number, cy: number,
@@ -321,6 +341,14 @@ export class AsciiRenderer {
   private prevR0 = 0;
   private prevR1 = -1;
 
+  /** How much of each cell sits under the glass, 0 (open water) to 1 (fully frosted). */
+  private glassCell = new Float32Array(0);
+  private glass: GlassPatch[] = [];
+  /** One pixel per cell: the sharks under the glass, before the blur. */
+  private softCells: HTMLCanvasElement | null = null;
+  private softBlurred: HTMLCanvasElement | null = null;
+  private softPixels: ImageData | null = null;
+
   /** Cells holding a fish this frame (frame stamp); dots skip them. */
   private fishStamp = new Uint32Array(0);
   private frameId = 0;
@@ -390,6 +418,7 @@ export class AsciiRenderer {
       this.sharkShadow = new Uint8Array(n);
       this.fishStamp = new Uint32Array(n);
     }
+    this.measureGlassCells();
 
     for (let i = 0; i < n; i++) {
       const col = i % this.cols;
@@ -411,10 +440,140 @@ export class AsciiRenderer {
   private paintBackground() {
     const g = this.bg.getContext("2d");
     if (!g) return;
-    const { width: W, height: H, dpr, cw, ch } = this;
+    const { width: W, height: H, dpr, cw, ch, cols, glassCell } = this;
     g.setTransform(1, 0, 0, 1, 0, 0);
     g.clearRect(0, 0, this.bg.width, this.bg.height);
     paintGrid(g, W, H, cw, ch, dpr);
+    // The glass is plain page: fade the grid out under it.
+    g.globalCompositeOperation = "destination-out";
+    for (let i = 0; i < glassCell.length; i++) {
+      const w = glassCell[i];
+      if (w <= 0) continue;
+      const x = Math.floor((i % cols) * cw * dpr);
+      const y = Math.floor(((i / cols) | 0) * ch * dpr);
+      g.fillStyle = `rgba(0,0,0,${w.toFixed(3)})`;
+      g.fillRect(x, y, Math.ceil(cw * dpr) + 1, Math.ceil(ch * dpr) + 1);
+    }
+    g.globalCompositeOperation = "source-over";
+  }
+
+  /** Set where the glass patches sit, then redraw the whole canvas to match. */
+  setGlass(patches: GlassPatch[]) {
+    this.glass = patches;
+    if (this.cols === 0) return;
+    this.measureGlassCells();
+    this.paintBackground();
+    const { ctx } = this;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    ctx.drawImage(this.bg, 0, 0);
+    this.prevR0 = 0;
+    this.prevR1 = -1;
+  }
+
+  /** Work out each cell's glass weight, feathered like the CSS masks the patches had. */
+  private measureGlassCells() {
+    const { cols, rows, cw, ch } = this;
+    const weight = this.glassCell.length === cols * rows ? this.glassCell : new Float32Array(cols * rows);
+    weight.fill(0);
+    this.glassCell = weight;
+    const ramp = (d: number, f: number) => (f <= 0 ? (d >= 0 ? 1 : 0) : clamp(d / f, 0, 1));
+    for (const p of this.glass) {
+      const c0 = clamp(Math.floor(p.x / cw), 0, cols - 1);
+      const c1 = clamp(Math.ceil((p.x + p.w) / cw), 0, cols - 1);
+      const r0 = clamp(Math.floor(p.y / ch), 0, rows - 1);
+      const r1 = clamp(Math.ceil((p.y + p.h) / ch), 0, rows - 1);
+      for (let r = r0; r <= r1; r++) {
+        const y = (r + 0.5) * ch;
+        for (let c = c0; c <= c1; c++) {
+          const x = (c + 0.5) * cw;
+          let w: number;
+          if (p.round) {
+            const radius = Math.min(p.w, p.h) / 2;
+            const d = Math.hypot(x - (p.x + p.w / 2), y - (p.y + p.h / 2)) / radius;
+            w = d <= 0.55 ? 1 : clamp((1 - d) / 0.45, 0, 1);
+          } else {
+            const f = Math.min(p.feather, p.w / 2, p.h / 2);
+            w = ramp(Math.min(x - p.x, p.x + p.w - x), f) * ramp(Math.min(y - p.y, p.y + p.h - y), f);
+          }
+          const i = r * cols + c;
+          if (w > weight[i]) weight[i] = w;
+        }
+      }
+    }
+  }
+
+  /**
+   * The sharks under the glass: one pixel per cell in the shark's skin colour, blurred a
+   * little and stretched over the cells, so they read as soft shapes behind frosted glass.
+   * The whole layer is a few thousand pixels, so this is nearly free on the GPU.
+   */
+  private drawSoftSharks() {
+    const { ctx, cols, cw, ch, dpr, glassCell, sharkFlag, sharkShade, sharkDepth, sharkKind, bandR0, bandR1 } = this;
+    const bandRows = bandR1 - bandR0 + 1;
+    if (bandRows <= 0 || !this.glass.length) return;
+    if (!this.softCells) this.softCells = document.createElement("canvas");
+    if (!this.softBlurred) this.softBlurred = document.createElement("canvas");
+    const cells = this.softCells;
+    const blurred = this.softBlurred;
+    if (cells.width !== cols + 2 || cells.height < bandRows + 2) {
+      // A one-cell transparent border, so the blur fades out instead of clamping at the edge.
+      cells.width = blurred.width = cols + 2;
+      cells.height = blurred.height = Math.max(cells.height, bandRows + 2);
+      this.softPixels = null;
+    }
+    const a = cells.getContext("2d");
+    const b = blurred.getContext("2d");
+    if (!a || !b) return;
+    if (!this.softPixels) this.softPixels = a.createImageData(cells.width, cells.height);
+    const px = this.softPixels.data;
+    px.fill(0);
+
+    let any = false;
+    const stride = cells.width;
+    for (let r = bandR0; r <= bandR1; r++) {
+      for (let c = 0; c < cols; c++) {
+        const i = r * cols + c;
+        const gw = glassCell[i];
+        const flag = sharkFlag[i];
+        if (gw <= 0 || !flag) continue;
+        const shade = sharkShade[i];
+        let level: number;
+        let alpha = gw;
+        if (flag === FLAG_EDGE) {
+          level = 70 + shade * 80;
+          alpha *= shade * 0.7;
+        } else if (flag === FLAG_RIDGE) level = 226;
+        else if (flag === FLAG_EYE) level = 12;
+        else if (flag === FLAG_MARK) level = 24 + shade * 22;
+        else if (flag === FLAG_FIN) level = 40 + shade * 120;
+        else level = 46 + shade * 160;
+        // The dark glyph on each block darkens it a little once blurred together.
+        level *= (0.7 + 0.3 * sharkDepth[i]) * 0.85;
+        const [tr, tg, tb] = SHAPES[KINDS[sharkKind[i]]].tint;
+        const o = ((r - bandR0 + 1) * stride + c + 1) * 4;
+        px[o] = level * tr;
+        px[o + 1] = level * tg;
+        px[o + 2] = level * tb + 4;
+        px[o + 3] = alpha * 255;
+        any = true;
+      }
+    }
+    if (!any) return;
+
+    const w = cells.width;
+    const h = bandRows + 2;
+    a.putImageData(this.softPixels, 0, 0, 0, 0, w, h);
+    b.clearRect(0, 0, w, h);
+    b.filter = `blur(${GLASS_BLUR_CELLS}px)`;
+    b.drawImage(cells, 0, 0, w, h, 0, 0, w, h);
+    b.filter = "none";
+
+    // Pixel centres land on cell centres; bilinear stretching softens the rest.
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(blurred, 0, 0, w, h, -cw * dpr, (bandR0 - 1) * ch * dpr, w * cw * dpr, h * ch * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
   render(world: World, dt: number) {
@@ -459,6 +618,7 @@ export class AsciiRenderer {
     this.drawHeat();
     this.drawFish();
     this.drawSharks(t);
+    this.drawSoftSharks();
   }
 
   // ── simulation → field ──────────────────────────────────────────────
@@ -786,11 +946,16 @@ export class AsciiRenderer {
   }
 
   private drawSharks(t: number) {
-    const { ctx, cols, cw, ch, sharkFlag, sharkShade, sharkKey, sharkDepth, sharkKind } = this;
+    const { ctx, cols, cw, ch, sharkFlag, sharkShade, sharkKey, sharkDepth, sharkKind, glassCell } = this;
     const end = (this.bandR1 + 1) * cols;
+    let alphaNow = 1;
     for (let i = this.bandR0 * cols; i < end; i++) {
       const flag = sharkFlag[i];
       if (!flag) continue;
+      // Under the glass the crisp shark gives way to the soft one (drawSoftSharks).
+      const crisp = 1 - glassCell[i];
+      if (crisp <= 0.02) continue;
+      if (crisp !== alphaNow) ctx.globalAlpha = alphaNow = crisp;
       const col = i % cols;
       const row = (i / cols) | 0;
       const x = col * cw;
@@ -849,6 +1014,7 @@ export class AsciiRenderer {
       ctx.fillStyle = color;
       ctx.fillText(glyph, x + cw / 2, y + ch / 2 + 1);
     }
+    ctx.globalAlpha = 1;
   }
 
   // ── fish, dots, heat ────────────────────────────────────────────────
@@ -868,7 +1034,7 @@ export class AsciiRenderer {
         const i = this.cellIndex(f.x, f.y);
         if (i < 0 || fishStamp[i] === frame || sharkFlag[i]) continue;
         const row = (i / this.cols) | 0;
-        if (row < this.bandR0 || row > this.bandR1) continue;
+        if (row < this.bandR0 || row > this.bandR1 || this.glassCell[i] > 0.5) continue;
         fishStamp[i] = frame;
         const glint = clamp(Math.abs(f.turn) / 3.5, 0, 1);
         const v = 0.3 + (0.4 * (f.depth - 0.55)) / 0.45 + 0.3 * Math.max(glint, f.alarm);
@@ -893,7 +1059,7 @@ export class AsciiRenderer {
     const { ctx, heat, cols, cw, ch } = this;
     const end = (this.bandR1 + 1) * cols;
     for (let i = this.bandR0 * cols; i < end; i++) {
-      const h = heat[i];
+      const h = heat[i] * (1 - this.glassCell[i]);
       if (h < 0.08) continue;
       const col = i % cols;
       const row = (i / cols) | 0;
@@ -916,7 +1082,7 @@ export class AsciiRenderer {
     bucketCounts.fill(0);
 
     for (let i = begin; i < n; i++) {
-      const e = energy[i];
+      const e = energy[i] * (1 - this.glassCell[i]);
       const kind = dotKind[i];
       if (sharkFlag[i] || fishStamp[i] === frameId || (kind === 0 && e < 0.45)) {
         bucketOf[i] = SKIP;

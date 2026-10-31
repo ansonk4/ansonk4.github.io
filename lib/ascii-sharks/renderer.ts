@@ -254,7 +254,9 @@ export interface GlassPatch {
 }
 
 /** How soft the sharks get under the glass, in cells. */
-const GLASS_BLUR_CELLS = 0.75;
+const GLASS_BLUR_CELLS = 0.35;
+/** How much of the sharp shark still shows through the glass, so its glyphs stay readable. */
+const GLASS_SHARP = 0.35;
 
 function inTriangle(
   px: number, py: number,
@@ -945,8 +947,8 @@ export class AsciiRenderer {
     for (let i = this.bandR0 * cols; i < end; i++) {
       const flag = sharkFlag[i];
       if (!flag) continue;
-      // Under the glass the crisp shark gives way to the soft one (drawSoftSharks).
-      const crisp = 1 - glassCell[i];
+      // Under the glass the crisp shark gives way to the soft one (drawSoftSharks), leaving a GLASS_SHARP trace.
+      const crisp = 1 - glassCell[i] * (1 - GLASS_SHARP);
       if (crisp <= 0.02) continue;
       if (crisp !== alphaNow) ctx.globalAlpha = alphaNow = crisp;
       const col = i % cols;

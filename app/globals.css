@@ -47,7 +47,7 @@
   --paper-icon-blend-mode: multiply;
   --skyline-filter: saturate(0.85) contrast(1.02);
   --skyline-blend-mode: multiply;
-  --glass-tint: rgba(255, 255, 255, 0.5);
+  --glass-tint: rgba(255, 255, 255, 0.28);
   color-scheme: var(--color-scheme);
   background: var(--color-page);
 }
@@ -72,7 +72,7 @@
   --paper-icon-filter: invert(1) hue-rotate(180deg) contrast(0.95) saturate(0.9);
   --paper-icon-blend-mode: normal;
   --skyline-blend-mode: normal;
-  --glass-tint: rgba(17, 16, 14, 0.45);
+  --glass-tint: rgba(17, 16, 14, 0.25);
 }
 
 * {
@@ -229,7 +229,7 @@ img {
  */
 :root:not([data-sharks="off"]) .ascii-sharks ~ .site-canvas {
   --glass-feather: 28px;
-  --glass-blur: blur(9px) saturate(1.4);
+  --glass-blur: blur(9px) saturate(1.9);
 }
 
 :root:not([data-sharks="off"]) .ascii-sharks ~ .site-canvas :is(

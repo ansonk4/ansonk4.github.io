@@ -14,7 +14,9 @@ const oceanScript = readFileSync(path.join(process.cwd(), "lib/ascii-sharks/asci
 export function AsciiSharks() {
   return (
     <>
-      <canvas className="ascii-sharks" aria-hidden="true" />
+      {/* The inline script sizes the canvas before React hydrates, so its width
+          and height differ from the server HTML on purpose. */}
+      <canvas className="ascii-sharks" aria-hidden="true" suppressHydrationWarning />
       <script dangerouslySetInnerHTML={{ __html: oceanScript }} />
     </>
   );

@@ -22,10 +22,9 @@ const GLASS_BUTTONS = ".theme-toggle, .sharks-toggle";
 /** How far the round buttons' patch reaches past the button (the CSS `inset: -6px`). */
 const BUTTON_REACH = 6;
 /**
- * On phones the panels hug the text instead of covering their whole box, so empty space
- * (the right side of a short line, the gaps between sections) stays clear water.
+ * The panels' glass hugs their text and images instead of covering the whole box, so
+ * empty space (the right side of a short line, the gaps between sections) stays clear water.
  */
-const NARROW = 560;
 const FIT_MEDIA = "img, svg, video, canvas, picture";
 
 /**
@@ -166,9 +165,7 @@ export class OceanEngine {
         });
       };
       const add = (el: Element, reach: number, round: boolean) => addRect(el.getBoundingClientRect(), reach, round);
-      const panels = site.querySelectorAll(GLASS_PANELS);
-      if (origin.width < NARROW) panels.forEach((el) => this.fitText(el, (r) => addRect(r, feather, false)));
-      else panels.forEach((el) => add(el, feather, false));
+      site.querySelectorAll(GLASS_PANELS).forEach((el) => this.fitText(el, (r) => addRect(r, feather, false)));
       site.querySelectorAll(GLASS_BUTTONS).forEach((el) => add(el, BUTTON_REACH, true));
     }
     this.renderer.setGlass(patches);

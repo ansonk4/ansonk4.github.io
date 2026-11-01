@@ -262,6 +262,8 @@ const GLASS_BLUR_CELLS = 0.75;
 const NARROW = 560;
 const GLASS_BLUR_CELLS_NARROW = 0.3;
 const GLASS_SHARP_NARROW = 0.5;
+/** Smallest cell width on phones, in CSS px (8 elsewhere). */
+const NARROW_CELL = 6;
 
 function inTriangle(
   px: number, py: number,
@@ -398,7 +400,8 @@ export class AsciiRenderer {
     this.height = height;
     this.viewHeight = viewHeight;
     this.dpr = dpr;
-    this.cw = clamp(Math.round(width / 124), 8, 13);
+    // Phones get finer cells (local change), so each shark is drawn with more of them.
+    this.cw = clamp(Math.round(width / 124), width < NARROW ? NARROW_CELL : 8, 13);
     this.ch = Math.round(this.cw * 1.45);
     this.cols = Math.ceil(width / this.cw);
     this.rows = Math.ceil(height / this.ch);

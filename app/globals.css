@@ -319,6 +319,21 @@ img {
   }
 }
 
+/*
+ * On phones the canvas frost follows the text line by line (engine.ts fitText), so the
+ * panel-sized tint would only show where the water is meant to stay clear.
+ */
+@media (max-width: 559.98px) {
+  :root[data-canvas-glass]:not([data-sharks="off"]) .ascii-sharks ~ .site-canvas :is(
+      .intro-panel,
+      .content-sections,
+      .playground-quote,
+      .research-asset
+    )::before {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-transparency: reduce) {
   :root:not([data-sharks="off"]) .ascii-sharks ~ .site-canvas :is(
       .intro-panel,

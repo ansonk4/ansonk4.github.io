@@ -21,6 +21,12 @@ const GLASS_PANELS = ".intro-panel, .content-sections, .playground-quote, .resea
 const GLASS_BUTTONS = ".theme-toggle, .sharks-toggle";
 /** How far the round buttons' patch reaches past the button (the CSS `inset: -6px`). */
 const BUTTON_REACH = 6;
+/**
+ * On phones the panels hug the text instead of covering their whole box, so empty space
+ * (the right side of a short line, the gaps between sections) stays clear water.
+ */
+const NARROW = 560;
+const FIT_MEDIA = "img, svg, video, canvas, picture";
 
 /**
  * Wires World + AsciiRenderer to a canvas: fixed-timestep loop, resize,
@@ -148,8 +154,7 @@ export class OceanEngine {
     const patches: GlassPatch[] = [];
     if (site) {
       const feather = parseFloat(getComputedStyle(site).getPropertyValue("--glass-feather")) || 0;
-      const add = (el: Element, reach: number, round: boolean) => {
-        const r = el.getBoundingClientRect();
+      const addRect = (r: DOMRect, reach: number, round: boolean) => {
         if (r.width < 1 || r.height < 1) return;
         patches.push({
           x: r.left - origin.left - reach,
@@ -160,13 +165,33 @@ export class OceanEngine {
           feather,
         });
       };
-      site.querySelectorAll(GLASS_PANELS).forEach((el) => add(el, feather, false));
+      const add = (el: Element, reach: number, round: boolean) => addRect(el.getBoundingClientRect(), reach, round);
+      const panels = site.querySelectorAll(GLASS_PANELS);
+      if (origin.width < NARROW) panels.forEach((el) => this.fitText(el, (r) => addRect(r, feather, false)));
+      else panels.forEach((el) => add(el, feather, false));
       site.querySelectorAll(GLASS_BUTTONS).forEach((el) => add(el, BUTTON_REACH, true));
     }
     this.renderer.setGlass(patches);
     document.documentElement.dataset.canvasGlass = "";
     // Inside resize() the frame that called it draws them already.
     if (redraw) this.invalidateView();
+  }
+
+  /** Calls back with a box for each line of text and each image inside `panel`. */
+  private fitText(panel: Element, out: (r: DOMRect) => void) {
+    const range = document.createRange();
+    const walker = document.createTreeWalker(panel, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      if (!node.nodeValue?.trim()) continue;
+      range.selectNodeContents(node);
+      // One box per line; the lines of a paragraph overlap once feathered, so it reads
+      // as one patch that follows the ragged right edge.
+      for (const r of range.getClientRects()) if (r.width > 1 && r.height > 1) out(r);
+    }
+    range.detach();
+    panel.querySelectorAll(FIT_MEDIA).forEach((el) => {
+      if (!el.parentElement?.closest("svg")) out(el.getBoundingClientRect());
+    });
   }
 
   private schedule() {

@@ -237,6 +237,52 @@ const SHAPES: Record<SharkKind, SharkShape> = {
 const KINDS = Object.keys(SHAPES) as SharkKind[];
 
 /**
+ * Performance (local change): upper bounds on each shape's half-width (fraction of length),
+ * overall and per 1/WIDTH_BINS of its length, found by dense sampling with a safety margin.
+ * The rasteriser uses them to rule out cells that cannot touch the shark without sampling
+ * them; they never change which cells are drawn.
+ */
+const WIDTH_BINS = 256;
+const WIDTH_BOUNDS = Object.fromEntries(
+  KINDS.map((kind) => {
+    const bins = new Float64Array(WIDTH_BINS);
+    for (let b = 0; b < WIDTH_BINS; b++) {
+      let max = 0;
+      for (let i = 0; i <= 64; i++) max = Math.max(max, SHAPES[kind].halfWidth((b + i / 64) / WIDTH_BINS));
+      bins[b] = max * 1.02 + 1e-4;
+    }
+    return [kind, bins];
+  }),
+) as Record<SharkKind, Float64Array>;
+const MAX_HALF_WIDTH = Object.fromEntries(
+  KINDS.map((kind) => [kind, Math.max(...WIDTH_BOUNDS[kind])]),
+) as Record<SharkKind, number>;
+/**
+ * Performance (local change): the same few hundred colour strings come up every frame, so
+ * build each once instead of a fresh string per cell, which kept the garbage collector busy.
+ */
+const rgbCache = new Map<number, string>();
+function rgb(r: number, g: number, b: number) {
+  if (r < 0 || g < 0 || b < 0 || r > 1023 || g > 1023 || b > 1023) return `rgb(${r},${g},${b})`;
+  const key = r * 1048576 + g * 1024 + b;
+  let style = rgbCache.get(key);
+  if (style === undefined) rgbCache.set(key, (style = `rgb(${r},${g},${b})`));
+  return style;
+}
+const eraseCache = new Map<number, string>();
+function eraseStyle(w: number) {
+  let style = eraseCache.get(w);
+  if (style === undefined) eraseCache.set(w, (style = `rgba(0,0,0,${w.toFixed(3)})`));
+  return style;
+}
+
+/** Slack on the distance bounds, far above floating-point error. */
+const BOUND_SLACK = 1e-7;
+/** Farthest a subsample sits from its cell's centre, in cells (see SUBSAMPLES). */
+const SUBSAMPLE_REACH_X = 0.25;
+const SUBSAMPLE_REACH_Y = 0.22;
+
+/**
  * One liquid glass patch behind the page's content, in canvas CSS pixels (local change).
  * Under a patch the ocean drops its grid, fish and wake, and the sharks swim through as a
  * soft blur. The renderer draws that itself, so the page needs no CSS backdrop-filter,
@@ -336,6 +382,24 @@ export class AsciiRenderer {
   private hitS = 0;
   private hitV = 0;
   private hitDist = 0;
+  /** Index of the spine segment nearest the last sample. */
+  private hitSeg = 0;
+  /** Current shark's spine segments (start, direction, squared length, bounding box). */
+  private segAx = new Float64Array(SHARK_NODES);
+  private segAy = new Float64Array(SHARK_NODES);
+  private segSx = new Float64Array(SHARK_NODES);
+  private segSy = new Float64Array(SHARK_NODES);
+  private segLen2 = new Float64Array(SHARK_NODES);
+  private segMinX = new Float64Array(SHARK_NODES);
+  private segMaxX = new Float64Array(SHARK_NODES);
+  private segMinY = new Float64Array(SHARK_NODES);
+  private segMaxY = new Float64Array(SHARK_NODES);
+  /** Current shark's maximum body half-width, in px. */
+  private maxHalfWidth = 0;
+  /** How far from each segment any part of the current shark can reach, in px. */
+  private segReach = new Float64Array(SHARK_NODES);
+  /** Segments that come near the current row. */
+  private rowSegs = new Int32Array(SHARK_NODES);
 
   /**
    * World rows covered by the viewport-sized canvas, including a scroll margin.
@@ -468,7 +532,7 @@ export class AsciiRenderer {
       if (w <= 0) continue;
       const x = Math.floor((i % cols) * cw * dpr);
       const y = Math.floor(((i / cols) | 0) * ch * dpr) - shift;
-      g.fillStyle = `rgba(0,0,0,${w.toFixed(3)})`;
+      g.fillStyle = eraseStyle(w);
       g.fillRect(x, y, Math.ceil(cw * dpr) + 1, Math.ceil(ch * dpr) + 1);
     }
     g.globalCompositeOperation = "source-over";
@@ -701,25 +765,38 @@ export class AsciiRenderer {
    * Writes hit* fields and returns whether the point is on the shark.
    */
   private sampleShark(px: number, py: number, L: number) {
-    const { spine, arc } = this;
+    const { arc, segAx, segAy, segSx, segSy, segLen2, segMinX, segMaxX, segMinY, segMaxY } = this;
     const N = SHARK_NODES;
+    // Performance (local change): the distance to the segment nearest the previous sample
+    // bounds the answer, so segments whose bounding box lies farther away are skipped
+    // unevaluated. The rest are scanned in the same order with the same arithmetic, so the
+    // same segment wins, ties included.
+    const h = this.hitSeg;
+    const hu = clamp(((px - segAx[h]) * segSx[h] + (py - segAy[h]) * segSy[h]) / segLen2[h], 0, 1);
+    const hd2 = (px - (segAx[h] + segSx[h] * hu)) ** 2 + (py - (segAy[h] + segSy[h] * hu)) ** 2;
+    const bound = hd2 * (1 + BOUND_SLACK) + BOUND_SLACK;
     let best = Infinity;
+    let bestK = 0;
     let bestS = 0;
     let bestSign = 1;
     let bestNx = 0;
     let bestNy = 0;
     for (let k = 0; k < N - 1; k++) {
-      const ax = spine[k * 2];
-      const ay = spine[k * 2 + 1];
-      const sx = spine[(k + 1) * 2] - ax;
-      const sy = spine[(k + 1) * 2 + 1] - ay;
-      const len2 = sx * sx + sy * sy || 1;
+      const bx = px < segMinX[k] ? segMinX[k] - px : px > segMaxX[k] ? px - segMaxX[k] : 0;
+      const by = py < segMinY[k] ? segMinY[k] - py : py > segMaxY[k] ? py - segMaxY[k] : 0;
+      if (bx * bx + by * by > bound) continue;
+      const ax = segAx[k];
+      const ay = segAy[k];
+      const sx = segSx[k];
+      const sy = segSy[k];
+      const len2 = segLen2[k];
       const u = clamp(((px - ax) * sx + (py - ay) * sy) / len2, 0, 1);
       const qx = ax + sx * u;
       const qy = ay + sy * u;
       const d2 = (px - qx) ** 2 + (py - qy) ** 2;
       if (d2 < best) {
         best = d2;
+        bestK = k;
         const len = Math.sqrt(len2);
         bestS = (arc[k] + u * len) / this.arcTotal;
         bestSign = sx * (py - ay) - sy * (px - ax) >= 0 ? 1 : -1;
@@ -727,12 +804,12 @@ export class AsciiRenderer {
         bestNy = (sx / len) * bestSign;
       }
     }
+    this.hitSeg = bestK;
 
     const a = Math.sqrt(best);
     const s = bestS;
     const u = s * L;
     const shape = this.shape;
-    const w = shape.halfWidth(s) * L;
     this.hitDist = a;
     this.hitS = s;
     this.hitV = a * bestSign;
@@ -753,6 +830,8 @@ export class AsciiRenderer {
       }
     }
 
+    // Only evaluate the outline where the body could reach (local change, same result).
+    const w = a <= this.maxHalfWidth ? shape.halfWidth(s) * L : 0;
     if (a <= w) {
       const across = a / (w || 1);
       // Rounded back lit from the top-left; flanks fall off into shadow.
@@ -833,6 +912,38 @@ export class AsciiRenderer {
   }
 
   /**
+   * How far from the spine any part of the current shark can reach (px) for body positions
+   * s0..s1: the body's half-width there, and the head and fins where they attach. Mirrors
+   * the hit tests in sampleShark; an overestimate only costs time.
+   */
+  private reachAlong(s0: number, s1: number, kind: SharkKind, L: number) {
+    s0 -= 1e-5;
+    s1 += 1e-5;
+    const bins = WIDTH_BOUNDS[kind];
+    const b0 = clamp(Math.floor(s0 * WIDTH_BINS), 0, WIDTH_BINS - 1);
+    const b1 = clamp(Math.floor(s1 * WIDTH_BINS), 0, WIDTH_BINS - 1);
+    let reach = 0;
+    for (let b = b0; b <= b1; b++) reach = Math.max(reach, bins[b]);
+    reach *= L;
+    // s outside 0..1 cannot happen, but stay safe: fall back to the whole body.
+    if (s0 < 0 || s1 > 1) reach = Math.max(reach, MAX_HALF_WIDTH[kind] * L);
+    const shape = this.shape;
+    const u0 = s0 * L;
+    const u1 = s1 * L;
+    const head = shape.head;
+    if (head && u0 < L * (head.sweep + head.depth + head.notch)) reach = Math.max(reach, L * head.span);
+    // Each fin is a triangle on the spine whose outer edge rises from its leading root to its tip.
+    const rise = (from: number, to: number, height: number) =>
+      u1 >= from && u0 <= to ? height * clamp((u1 - from) / (to - from || 1), 0, 1) : 0;
+    const [p0, , p2] = shape.pectoral;
+    reach = Math.max(reach, rise(L * p0, L * p2, Math.max(this.finTipLeft, this.finTipRight)));
+    const [v0, , v2, vr] = shape.pelvic;
+    reach = Math.max(reach, rise(L * v0, L * v2, L * vr));
+    if (shape.caudal > 0) reach = Math.max(reach, rise(L * 0.86, L, L * shape.caudal));
+    return reach;
+  }
+
+  /**
    * Build a smooth, undulating render spine from the sim spine, then
    * supersample every cell in the shark's bounding box against the shape.
    * Fully covered cells become solid skin; partial cells become edge glyphs.
@@ -873,6 +984,24 @@ export class AsciiRenderer {
           Math.hypot(spine[k * 2] - spine[(k - 1) * 2], spine[k * 2 + 1] - spine[(k - 1) * 2 + 1]);
       }
       this.arcTotal = arc[N - 1] || 1;
+      const { segAx, segAy, segSx, segSy, segLen2, segMinX, segMaxX, segMinY, segMaxY } = this;
+      for (let k = 0; k < N - 1; k++) {
+        const ax = spine[k * 2];
+        const ay = spine[k * 2 + 1];
+        const bx = spine[(k + 1) * 2];
+        const by = spine[(k + 1) * 2 + 1];
+        segAx[k] = ax;
+        segAy[k] = ay;
+        segSx[k] = bx - ax;
+        segSy[k] = by - ay;
+        segLen2[k] = segSx[k] * segSx[k] + segSy[k] * segSy[k] || 1;
+        segMinX[k] = Math.min(ax, bx);
+        segMaxX[k] = Math.max(ax, bx);
+        segMinY[k] = Math.min(ay, by);
+        segMaxY[k] = Math.max(ay, by);
+      }
+      this.hitSeg = 0;
+      this.maxHalfWidth = MAX_HALF_WIDTH[sh.kind] * L;
 
       // Bank into turns: the inside fin foreshortens, the outside one spreads.
       const bank = clamp(sh.turn * 0.45, -0.35, 0.35);
@@ -902,21 +1031,54 @@ export class AsciiRenderer {
       const shadowDc = Math.round((L * 0.035) / cw) + 1;
       const shadowDr = Math.round((L * 0.02) / ch) + 1;
 
+      // Performance (local change): a sample's nearest segment decides where along the body
+      // it is, and so how far out the body, fins or head can reach there (segReach). A cell
+      // whose centre is farther than that, plus the subsample spread, from every segment
+      // cannot be hit by any of its five samples, so it is skipped without sampling it. Such
+      // a cell drew nothing before either.
+      const { segReach, rowSegs } = this;
+      const spread = Math.hypot(SUBSAMPLE_REACH_X * cw, SUBSAMPLE_REACH_Y * ch);
+      for (let k = 0; k < N - 1; k++) {
+        segReach[k] = (this.reachAlong(arc[k] / this.arcTotal, arc[k + 1] / this.arcTotal, sh.kind, L) + spread) * (1 + BOUND_SLACK) + BOUND_SLACK;
+      }
+
       for (let r = r0; r <= r1; r++) {
+        const y = r * ch;
+        const cy = y + ch / 2;
+        let count = 0;
+        for (let k = 0; k < N - 1; k++) {
+          if (cy >= segMinY[k] - segReach[k] && cy <= segMaxY[k] + segReach[k]) rowSegs[count++] = k;
+        }
+        if (count === 0) continue;
         for (let c = c0; c <= c1; c++) {
           const x = c * cw;
-          const y = r * ch;
-          const centerHit = this.sampleShark(x + cw / 2, y + ch / 2, L);
+          const cx = x + cw / 2;
+          let near = false;
+          for (let j = 0; j < count; j++) {
+            const k = rowSegs[j];
+            const bx = cx < segMinX[k] ? segMinX[k] - cx : cx > segMaxX[k] ? cx - segMaxX[k] : 0;
+            const by = cy < segMinY[k] ? segMinY[k] - cy : cy > segMaxY[k] ? cy - segMaxY[k] : 0;
+            if (bx * bx + by * by <= segReach[k] * segReach[k]) {
+              near = true;
+              break;
+            }
+          }
+          if (!near) continue;
+          const centerHit = this.sampleShark(cx, cy, L);
           if (!centerHit && this.hitDist > skipBeyond) continue;
           const flag = this.hitFlag;
           const shade = this.hitShade;
           const s = this.hitS;
           const v = this.hitV;
+          const seg = this.hitSeg;
 
           let hits = centerHit ? 1 : 0;
           for (let k = 0; k < SUBSAMPLES.length; k += 2) {
             if (this.sampleShark(x + SUBSAMPLES[k] * cw, y + SUBSAMPLES[k + 1] * ch, L)) hits++;
+            // A hit centre with two more hits is solid skin whatever the rest say.
+            if (centerHit && hits >= 3) break;
           }
+          this.hitSeg = seg;
           if (hits === 0) continue;
           const coverage = hits / 5;
 
@@ -974,7 +1136,7 @@ export class AsciiRenderer {
         ctx.fillStyle =
           roll < 0.07
             ? ACCENTS[key % ACCENTS.length]
-            : `rgb(${Math.round(g * tr)},${Math.round(g * tg)},${Math.min(255, Math.round(g * tb + 6))})`;
+            : rgb(Math.round(g * tr), Math.round(g * tg), Math.min(255, Math.round(g * tb + 6)));
         ctx.fillText(set[(key >>> 8) % set.length], x + cw / 2, y + ch / 2 + 1);
         continue;
       }
@@ -1000,12 +1162,12 @@ export class AsciiRenderer {
       }
       level *= dim;
       // Tinted per species; the classic tint is a cool blue-grey, like a back seen through deep water.
-      ctx.fillStyle = `rgb(${Math.min(255, Math.round(level * tr))},${Math.min(255, Math.round(level * tg))},${Math.min(255, Math.round(level * tb + 4))})`;
+      ctx.fillStyle = rgb(Math.min(255, Math.round(level * tr)), Math.min(255, Math.round(level * tg)), Math.min(255, Math.round(level * tb + 4)));
       ctx.fillRect(x + 1, y + 1, cw - 1, ch - 1);
 
       let color: string;
       if (flag === FLAG_EYE) color = "#9aa0ad";
-      else if (flag === FLAG_MARK) color = `rgb(${Math.round(70 * tr)},${Math.round(70 * tg)},${Math.round(70 * tb)})`;
+      else if (flag === FLAG_MARK) color = rgb(Math.round(70 * tr), Math.round(70 * tg), Math.round(70 * tb));
       else if (roll < 0.09) color = ACCENTS[key % ACCENTS.length];
       else if (roll < 0.13) color = "#ffffff";
       else color = shade > 0.55 ? "#0e0f13" : "#1b1d24";

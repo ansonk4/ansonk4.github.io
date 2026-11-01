@@ -26,6 +26,10 @@ const BUTTON_REACH = 6;
  * empty space (the right side of a short line, the gaps between sections) stays clear water.
  */
 const FIT_MEDIA = "img, svg, video, canvas, picture";
+/** Desktop only: how much farther the fully frosted area reaches past the text, in px. */
+const GLASS_PAD_WIDE = 12;
+/** Phone width, in CSS px (matches the renderer and the CSS breakpoint). */
+const NARROW = 560;
 
 /**
  * Wires World + AsciiRenderer to a canvas: fixed-timestep loop, resize,
@@ -165,7 +169,8 @@ export class OceanEngine {
         });
       };
       const add = (el: Element, reach: number, round: boolean) => addRect(el.getBoundingClientRect(), reach, round);
-      site.querySelectorAll(GLASS_PANELS).forEach((el) => this.fitText(el, (r) => addRect(r, feather, false)));
+      const panelReach = feather + (origin.width < NARROW ? 0 : GLASS_PAD_WIDE);
+      site.querySelectorAll(GLASS_PANELS).forEach((el) => this.fitText(el, (r) => addRect(r, panelReach, false)));
       site.querySelectorAll(GLASS_BUTTONS).forEach((el) => add(el, BUTTON_REACH, true));
     }
     this.renderer.setGlass(patches);

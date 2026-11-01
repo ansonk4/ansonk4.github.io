@@ -255,13 +255,8 @@ export interface GlassPatch {
 
 /** How soft the sharks get under the glass, in cells. */
 const GLASS_BLUR_CELLS = 0.75;
-/**
- * Phones (local change): cells are at their smallest there, so the same blur in cells
- * smears a shark past recognition. Blur less, and let the sharp shark show through.
- */
+/** Phone width, in CSS px. */
 const NARROW = 560;
-const GLASS_BLUR_CELLS_NARROW = 0.3;
-const GLASS_SHARP_NARROW = 0.5;
 /** Smallest cell width on phones, in CSS px (8 elsewhere). */
 const NARROW_CELL = 6;
 
@@ -581,7 +576,7 @@ export class AsciiRenderer {
     const h = bandRows + 2;
     a.putImageData(this.softPixels, 0, 0, 0, 0, w, h);
     b.clearRect(0, 0, w, h);
-    b.filter = `blur(${this.width < NARROW ? GLASS_BLUR_CELLS_NARROW : GLASS_BLUR_CELLS}px)`;
+    b.filter = `blur(${GLASS_BLUR_CELLS}px)`;
     b.drawImage(cells, 0, 0, w, h, 0, 0, w, h);
     b.filter = "none";
 
@@ -952,12 +947,11 @@ export class AsciiRenderer {
     const { ctx, cols, cw, ch, sharkFlag, sharkShade, sharkKey, sharkDepth, sharkKind, glassCell } = this;
     const end = (this.bandR1 + 1) * cols;
     let alphaNow = 1;
-    const frost = this.width < NARROW ? 1 - GLASS_SHARP_NARROW : 1;
     for (let i = this.bandR0 * cols; i < end; i++) {
       const flag = sharkFlag[i];
       if (!flag) continue;
       // Under the glass the crisp shark gives way to the soft one (drawSoftSharks).
-      const crisp = 1 - glassCell[i] * frost;
+      const crisp = 1 - glassCell[i];
       if (crisp <= 0.02) continue;
       if (crisp !== alphaNow) ctx.globalAlpha = alphaNow = crisp;
       const col = i % cols;

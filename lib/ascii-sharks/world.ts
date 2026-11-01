@@ -152,7 +152,9 @@ export class World {
     const { width: W, height: H } = this;
     const minSide = Math.min(W, this.viewHeight);
     const cy0 = this.viewCenterY;
-    const baseLength = clamp(minSide * 0.44, 170, 430);
+    // On a phone the screen's short side is narrow, so sharks there take a bigger share
+    // of it to stay recognisable (local change).
+    const baseLength = clamp(minSide * (W < 560 ? 0.68 : 0.44), 170, 430);
     const sharkCount = this.sharkSpecs.length;
 
     this.sharks = [];

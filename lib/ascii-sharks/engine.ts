@@ -60,6 +60,8 @@ export class OceanEngine {
     this.renderer = new AsciiRenderer(canvas);
     this.renderer.setFontFamily(getComputedStyle(canvas).fontFamily);
     this.reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    // Sharks swim in from the edges on load, unless motion is reduced (local change).
+    this.world.entrance = !this.reducedMotion.matches;
 
     this.resizeObserver = new ResizeObserver(this.invalidateView);
     this.resizeObserver.observe(this.page);

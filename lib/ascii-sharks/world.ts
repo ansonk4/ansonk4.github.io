@@ -72,6 +72,15 @@ export interface Shark {
   retargetAt: number;
   /** 0 far / dim → 1 near / bright. */
   depth: number;
+  /**
+   * Local change: on first load each shark starts off-screen and swims in toward
+   * (enterX, enterY) before it starts patrolling and hunting.
+   */
+  entering: boolean;
+  enterX: number;
+  enterY: number;
+  /** World time after which the entrance ends regardless, so no shark lingers off-screen. */
+  enterUntil: number;
 }
 
 export interface WorldEvent {
@@ -99,6 +108,11 @@ export class World {
    * the whole page, so sharks size themselves to and patrol around the viewport).
    */
   view = { top: 0, height: 0 };
+  /**
+   * When true (the default), seed() puts the sharks just past the edges of the screen
+   * and they swim in. The engine turns it off for reduced motion (local change).
+   */
+  entrance = true;
 
   private get viewHeight() {
     return this.view.height > 0 ? Math.min(this.view.height, this.height) : this.height;
@@ -156,6 +170,16 @@ export class World {
     // of it to stay recognisable (local change).
     const baseLength = clamp(minSide * (W < 560 ? 0.68 : 0.44), 170, 430);
     const sharkCount = this.sharkSpecs.length;
+    const viewTop = this.viewCenterY - this.viewHeight / 2;
+    const viewH = this.viewHeight;
+    // Entrance sides, alternating left and right, with one from below on taller screens.
+    const sides: number[] = [];
+    for (let i = 0; i < sharkCount; i++) sides.push(i % 2);
+    if (sharkCount > 2 && viewH > W * 0.8) sides[sharkCount - 1] = 2;
+    for (let i = sides.length - 1; i > 0; i--) {
+      const j = randInt(0, i);
+      [sides[i], sides[j]] = [sides[j], sides[i]];
+    }
 
     this.sharks = [];
     for (let i = 0; i < sharkCount; i++) {
@@ -164,9 +188,26 @@ export class World {
       const orbitRadius = minSide * rand(0.28, 0.4);
       const a = (i / sharkCount) * TAU + rand(-0.4, 0.4);
       const orbitDir: 1 | -1 = i % 2 === 0 ? 1 : -1;
-      const x = W / 2 + Math.cos(a) * orbitRadius * (W / minSide) * 0.9;
-      const y = cy0 + Math.sin(a) * orbitRadius;
-      const heading = a + (orbitDir * Math.PI) / 2;
+      let x = W / 2 + Math.cos(a) * orbitRadius * (W / minSide) * 0.9;
+      let y = cy0 + Math.sin(a) * orbitRadius;
+      let heading = a + (orbitDir * Math.PI) / 2;
+      // Swim in toward this point; the patrol circuit takes over once the shark is in view.
+      const enterX = W / 2 + rand(-0.32, 0.32) * W;
+      const enterY = cy0 + rand(-0.3, 0.3) * viewH;
+      if (this.entrance) {
+        // Snout just past the edge (some a little farther, so they arrive one after another),
+        // body trailing behind it off-screen.
+        const lag = length * rand(0.04, 0.5);
+        const side = sides[i];
+        if (side === 2) {
+          x = rand(0.2, 0.8) * W;
+          y = viewTop + viewH + lag;
+        } else {
+          x = side === 0 ? -lag : W + lag;
+          y = viewTop + viewH * rand(0.2, 0.8);
+        }
+        heading = Math.atan2(enterY - y, enterX - x) + rand(-0.2, 0.2);
+      }
       const nodes = new Float32Array(SHARK_NODES * 2);
       const seg = length / (SHARK_NODES - 1);
       for (let n = 0; n < SHARK_NODES; n++) {
@@ -179,7 +220,7 @@ export class World {
         length,
         nodes,
         heading,
-        speed: 30,
+        speed: this.entrance ? (30 + length * 0.04) * 2.2 : 30,
         phase: rand(0, TAU),
         turn: 0,
         hunger: rand(0.25, 0.75),
@@ -189,6 +230,10 @@ export class World {
         target: null,
         retargetAt: 0,
         depth: size,
+        entering: this.entrance,
+        enterX,
+        enterY,
+        enterUntil: this.time + 12,
       });
     }
     // Smaller (farther) sharks draw first so the big one swims over them.
@@ -497,8 +542,19 @@ export class World {
       dx += Math.cos(sh.heading + sh.wander) * 0.45;
       dy += Math.sin(sh.heading + sh.wander) * 0.45;
 
+      if (sh.entering) {
+        // Swimming in: done once the snout is well inside the screen (the body follows it
+        // in), or if it's somehow taking too long.
+        const m = Math.min(L * 0.3, W * 0.2, viewH * 0.2);
+        const inside = hx > m && hx < W - m && Math.abs(hy - cyW) < viewH / 2 - m;
+        if (inside || time > sh.enterUntil) {
+          sh.entering = false;
+        }
+      }
+      const entering = sh.entering;
+
       // Hunt.
-      if (time >= sh.retargetAt) {
+      if (!entering && time >= sh.retargetAt) {
         sh.target = this.findPrey(sh);
         sh.retargetAt = time + 0.45;
       }
@@ -506,7 +562,14 @@ export class World {
       let hunting = false;
       let closing = 0;
       const outside = Math.max(0, Math.abs(hy - cyW) - viewH * 0.35);
-      if (t && t.alive && sh.hunger > 0.3 && outside < viewH * 0.25) {
+      if (entering) {
+        // Head for the entry point, steadily (on top of the momentum and wander above).
+        const tx = sh.enterX - hx;
+        const ty = sh.enterY - hy;
+        const d = Math.hypot(tx, ty) || 1;
+        dx += (tx / d) * 1.2;
+        dy += (ty / d) * 1.2;
+      } else if (t && t.alive && sh.hunger > 0.3 && outside < viewH * 0.25) {
         // Pursuit: aim at where the fish is about to be.
         const tx = t.x + t.vx * 0.35 - hx;
         const ty = t.y + t.vy * 0.35 - hy;
@@ -528,7 +591,7 @@ export class World {
       }
 
       // Off the reader's screen: give up the chase and swim back toward it.
-      if (outside > 0) {
+      if (outside > 0 && !entering) {
         const w = clamp(outside / (viewH * 0.5), 0, 1) * 2.4;
         const d = Math.hypot(cxW - hx, cyW - hy) || 1;
         dx += ((cxW - hx) / d) * w;
@@ -565,7 +628,7 @@ export class World {
       // Turn back once the snout leaves the frame, so bodies dip off-screen
       // now and then but the sharks never wander away for good.
       const over = Math.max(-hx, hx - W, -hy, hy - H);
-      if (over > -L * 0.05) {
+      if (over > -L * 0.05 && !entering) {
         const w = clamp((over + L * 0.05) / (L * 0.35), 0, 1) * 3.5;
         const toX = cxW - hx;
         const toY = cyW - hy;
@@ -585,7 +648,7 @@ export class World {
       const cruise = 30 + L * 0.04;
       // Swim faster the farther off-screen, so a long scroll doesn't leave the view empty for long.
       const commute = 1 + 4 * clamp(outside / viewH, 0, 1);
-      const targetSpeed = hunting ? cruise * (1.45 + closing * 1.5) : cruise * commute;
+      const targetSpeed = entering ? cruise * 2.2 : hunting ? cruise * (1.45 + closing * 1.5) : cruise * commute;
       sh.speed += (targetSpeed - sh.speed) * Math.min(1, dt * 1.1);
       sh.phase += dt * (2 + sh.speed / 24);
 

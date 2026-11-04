@@ -79,6 +79,8 @@ export interface Shark {
   entering: boolean;
   enterX: number;
   enterY: number;
+  /** World time at which this shark starts swimming in; it waits off-screen until then. */
+  enterAt: number;
   /** World time after which the entrance ends regardless, so no shark lingers off-screen. */
   enterUntil: number;
 }
@@ -172,13 +174,23 @@ export class World {
     const sharkCount = this.sharkSpecs.length;
     const viewTop = this.viewCenterY - this.viewHeight / 2;
     const viewH = this.viewHeight;
-    // Entrance sides, alternating left and right, with one from below on taller screens.
+    // Entrance sides (0 left, 1 right, 2 bottom, 3 top), dealt from shuffled decks of all
+    // four so they come from every edge without bunching up on one.
     const sides: number[] = [];
-    for (let i = 0; i < sharkCount; i++) sides.push(i % 2);
-    if (sharkCount > 2 && viewH > W * 0.8) sides[sharkCount - 1] = 2;
-    for (let i = sides.length - 1; i > 0; i--) {
+    while (sides.length < sharkCount) {
+      const deck = [0, 1, 2, 3];
+      for (let i = deck.length - 1; i > 0; i--) {
+        const j = randInt(0, i);
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+      }
+      sides.push(...deck);
+    }
+    // Staggered start times: one shark almost at once, the rest trickling in over a few seconds.
+    const delays: number[] = [];
+    for (let i = 0; i < sharkCount; i++) delays.push(i === 0 ? rand(0, 0.3) : rand(0.4, 4));
+    for (let i = delays.length - 1; i > 0; i--) {
       const j = randInt(0, i);
-      [sides[i], sides[j]] = [sides[j], sides[i]];
+      [delays[i], delays[j]] = [delays[j], delays[i]];
     }
 
     this.sharks = [];
@@ -195,13 +207,12 @@ export class World {
       const enterX = W / 2 + rand(-0.32, 0.32) * W;
       const enterY = cy0 + rand(-0.3, 0.3) * viewH;
       if (this.entrance) {
-        // Snout just past the edge (some a little farther, so they arrive one after another),
-        // body trailing behind it off-screen.
-        const lag = length * rand(0.04, 0.5);
+        // Snout just past the edge, body trailing behind it off-screen.
+        const lag = length * rand(0.04, 0.2);
         const side = sides[i];
-        if (side === 2) {
-          x = rand(0.2, 0.8) * W;
-          y = viewTop + viewH + lag;
+        if (side === 2 || side === 3) {
+          x = rand(0.15, 0.85) * W;
+          y = side === 2 ? viewTop + viewH + lag : viewTop - lag;
         } else {
           x = side === 0 ? -lag : W + lag;
           y = viewTop + viewH * rand(0.2, 0.8);
@@ -233,7 +244,8 @@ export class World {
         entering: this.entrance,
         enterX,
         enterY,
-        enterUntil: this.time + 12,
+        enterAt: this.time + (this.entrance ? delays[i] : 0),
+        enterUntil: this.time + (this.entrance ? delays[i] : 0) + 12,
       });
     }
     // Smaller (farther) sharks draw first so the big one swims over them.
@@ -531,6 +543,9 @@ export class World {
       const hx = nodes[0];
       const hy = nodes[1];
 
+      // Not its turn to swim in yet: hold still just off-screen.
+      if (sh.entering && time < sh.enterAt) continue;
+
       sh.hunger = Math.min(1, sh.hunger + dt * 0.03);
 
       // Momentum.
@@ -600,7 +615,8 @@ export class World {
 
       // Give other sharks room.
       for (const other of sharks) {
-        if (other === sh) continue;
+        // A shark still waiting off-screen to swim in isn't in anyone's way yet.
+        if (other === sh || (other.entering && time < other.enterAt)) continue;
         for (let k = 0; k < SHARK_NODES; k += 4) {
           const ox = hx - other.nodes[k * 2];
           const oy = hy - other.nodes[k * 2 + 1];

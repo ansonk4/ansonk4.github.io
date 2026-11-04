@@ -185,9 +185,14 @@ export class World {
       }
       sides.push(...deck);
     }
-    // Staggered start times: one shark almost at once, the rest trickling in over a few seconds.
+    // Staggered start times: one shark almost at once, then the rest one by one, each a
+    // random 1-2.6 s after the one before, in a shuffled order.
     const delays: number[] = [];
-    for (let i = 0; i < sharkCount; i++) delays.push(i === 0 ? rand(0, 0.3) : rand(0.4, 4));
+    let at = rand(0, 0.3);
+    for (let i = 0; i < sharkCount; i++) {
+      delays.push(at);
+      at += rand(1, 2.6);
+    }
     for (let i = delays.length - 1; i > 0; i--) {
       const j = randInt(0, i);
       [delays[i], delays[j]] = [delays[j], delays[i]];
@@ -203,9 +208,9 @@ export class World {
       let x = W / 2 + Math.cos(a) * orbitRadius * (W / minSide) * 0.9;
       let y = cy0 + Math.sin(a) * orbitRadius;
       let heading = a + (orbitDir * Math.PI) / 2;
-      // Swim in toward this point; the patrol circuit takes over once the shark is in view.
-      const enterX = W / 2 + rand(-0.32, 0.32) * W;
-      const enterY = cy0 + rand(-0.3, 0.3) * viewH;
+      // Swim in toward (enterX, enterY); the patrol circuit takes over once it gets there.
+      let enterX = W / 2;
+      let enterY = cy0;
       if (this.entrance) {
         // Snout just past the edge, body trailing behind it off-screen.
         const lag = length * rand(0.04, 0.2);
@@ -217,7 +222,15 @@ export class World {
           x = side === 0 ? -lag : W + lag;
           y = viewTop + viewH * rand(0.2, 0.8);
         }
-        heading = Math.atan2(enterY - y, enterX - x) + rand(-0.2, 0.2);
+        // Head in at a slant rather than straight for the middle, and aim for a point part
+        // of the way across along that line, so each shark cuts its own path.
+        const inward = [0, Math.PI, -Math.PI / 2, Math.PI / 2][side];
+        heading = inward + rand(-0.75, 0.75);
+        const across = side < 2 ? W : viewH;
+        const reach = clamp(across * rand(0.25, 0.4), length * 0.8, length * 1.6);
+        enterX = clamp(x + Math.cos(heading) * reach, W * 0.2, W * 0.8);
+        enterY = clamp(y + Math.sin(heading) * reach, viewTop + viewH * 0.22, viewTop + viewH * 0.78);
+        heading = Math.atan2(enterY - y, enterX - x);
       }
       const nodes = new Float32Array(SHARK_NODES * 2);
       const seg = length / (SHARK_NODES - 1);
@@ -231,7 +244,7 @@ export class World {
         length,
         nodes,
         heading,
-        speed: this.entrance ? (30 + length * 0.04) * 2.2 : 30,
+        speed: this.entrance ? (30 + length * 0.04) * 1.9 : 30,
         phase: rand(0, TAU),
         turn: 0,
         hunger: rand(0.25, 0.75),
@@ -558,11 +571,12 @@ export class World {
       dy += Math.sin(sh.heading + sh.wander) * 0.45;
 
       if (sh.entering) {
-        // Swimming in: done once the snout is well inside the screen (the body follows it
-        // in), or if it's somehow taking too long.
+        // Swimming in: done once the snout is well inside the screen and near its entry
+        // point (or has been inside a while), or if it's somehow taking too long.
         const m = Math.min(L * 0.3, W * 0.2, viewH * 0.2);
         const inside = hx > m && hx < W - m && Math.abs(hy - cyW) < viewH / 2 - m;
-        if (inside || time > sh.enterUntil) {
+        const near = Math.hypot(sh.enterX - hx, sh.enterY - hy) < L * 0.6;
+        if ((inside && (near || time > sh.enterAt + 4)) || time > sh.enterUntil) {
           sh.entering = false;
         }
       }
@@ -664,7 +678,7 @@ export class World {
       const cruise = 30 + L * 0.04;
       // Swim faster the farther off-screen, so a long scroll doesn't leave the view empty for long.
       const commute = 1 + 4 * clamp(outside / viewH, 0, 1);
-      const targetSpeed = entering ? cruise * 2.2 : hunting ? cruise * (1.45 + closing * 1.5) : cruise * commute;
+      const targetSpeed = entering ? cruise * 1.9 : hunting ? cruise * (1.45 + closing * 1.5) : cruise * commute;
       sh.speed += (targetSpeed - sh.speed) * Math.min(1, dt * 1.1);
       sh.phase += dt * (2 + sh.speed / 24);
 

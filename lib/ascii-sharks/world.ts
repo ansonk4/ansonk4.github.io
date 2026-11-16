@@ -679,7 +679,15 @@ export class World {
       const cruise = 30 + L * 0.04;
       // Swim faster the farther off-screen, so a long scroll doesn't leave the view empty for long.
       const commute = 1 + 4 * clamp(outside / viewH, 0, 1);
-      const targetSpeed = entering ? cruise * 1.9 : hunting ? cruise * (1.45 + closing * 1.5) : cruise * commute;
+      // With no fish to chase (local change), sharks never hit hunting speed and would
+      // only ever idle along, so they patrol at about the pace a hunt averages instead:
+      // 1.45-2.65x cruise, surging and easing on a slow, per-shark swell.
+      const patrol = this.fish.length === 0 ? 1.45 + 1.2 * (0.5 + 0.5 * Math.sin(time * 0.3 + sh.id * 2.1)) : 1;
+      const targetSpeed = entering
+        ? cruise * 1.9
+        : hunting
+          ? cruise * (1.45 + closing * 1.5)
+          : cruise * Math.max(commute, patrol);
       sh.speed += (targetSpeed - sh.speed) * Math.min(1, dt * 1.1);
       sh.phase += dt * (2 + sh.speed / 24);
 

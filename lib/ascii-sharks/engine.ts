@@ -56,7 +56,8 @@ export class OceanEngine {
 
   constructor(private canvas: HTMLCanvasElement, sharks?: SharkSpec[]) {
     this.page = canvas.parentElement!;
-    this.world = new World(sharks);
+    // Sharks only: no fish schools, so no grey dashes drifting across the page (local change).
+    this.world = new World(sharks, 0);
     this.renderer = new AsciiRenderer(canvas);
     this.renderer.setFontFamily(getComputedStyle(canvas).fontFamily);
     this.reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");

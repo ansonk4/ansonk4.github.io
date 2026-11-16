@@ -154,7 +154,8 @@ export class World {
     this.perception = Math.max(cellH * 3, cellW * 5.5);
     this.foreignSep = cellW * 3;
 
-    if (first || this.fish.length === 0) {
+    // Seed once; an empty fish list is allowed, so check the sharks (local change).
+    if (first || this.sharks.length === 0) {
       this.seed();
       return;
     }

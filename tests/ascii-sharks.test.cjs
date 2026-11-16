@@ -81,12 +81,13 @@ test('long pages use bounded buffers and retain world/input coordinates after sc
   assert.equal(canvas.height, 1156 * 2);
   assert.equal(parseFloat(canvas.style.height), 1156);
   assert.equal(engine.world.height, 6000);
-  const fish = engine.world.fish;
+  const sharks = engine.world.sharks;
   const backing = [canvas.width, canvas.height];
   env.scroll(3200);
   env.advance(100);
   assert.deepEqual([canvas.width, canvas.height], backing);
-  assert.equal(engine.world.fish, fish);
+  assert.equal(engine.world.sharks, sharks);
+  assert.equal(engine.world.fish.length, 0);
   assert.equal(engine.world.view.top, 3200);
   assert.equal(canvas.style.top, '3072px');
   env.window.emit('pointermove', { clientX: 100, clientY: 200, pointerType: 'mouse' });

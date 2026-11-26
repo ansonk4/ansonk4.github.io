@@ -41,6 +41,13 @@ export function PortraitToggle({ name }: PortraitToggleProps) {
         loading="eager"
         className="portrait-image portrait-image-alternate"
       />
+      <span className="portrait-hint" aria-hidden="true">
+        <span className="portrait-hint-icon">↻</span>{" "}
+        <span className="portrait-hint-state">{showAlternate ? "real photo · " : "AI-drawn · "}</span>
+        <span className="portrait-hint-verb-click">click</span>
+        <span className="portrait-hint-verb-tap">tap</span>{" "}
+        {showAlternate ? "for the drawing" : "for the real me"}
+      </span>
     </button>
   );
 }

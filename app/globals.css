@@ -498,6 +498,53 @@ img {
   transition: opacity 140ms ease;
 }
 
+.portrait-hint {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  z-index: 2;
+  margin-top: 6px;
+  transform: translateX(-50%);
+  font-family: var(--font-tufte);
+  font-size: var(--type-small);
+  font-style: italic;
+  line-height: 1.2;
+  white-space: nowrap;
+  color: var(--color-copy);
+  opacity: 0.5;
+  pointer-events: none;
+  transition: opacity 160ms ease;
+}
+
+.portrait-wrap:hover .portrait-hint,
+.portrait-wrap:focus-visible .portrait-hint {
+  opacity: 0.85;
+}
+
+.portrait-hint-icon {
+  font-style: normal;
+}
+
+.portrait-hint-verb-tap {
+  display: none;
+}
+
+@media (min-width: 561px) and (max-width: 820px) {
+  .portrait-hint-state {
+    display: none;
+  }
+}
+
+@media (hover: none) {
+  .portrait-hint-verb-click {
+    display: none;
+  }
+
+  .portrait-hint-verb-tap {
+    display: inline;
+  }
+}
+
 .portrait-wrap[data-portrait="default"] .portrait-image-default,
 .portrait-wrap[data-portrait="alternate"] .portrait-image-alternate {
   opacity: 1;
@@ -1047,7 +1094,7 @@ img {
 
   .hero-grid {
     grid-template-columns: 1fr;
-    row-gap: 20px;
+    row-gap: 42px;
   }
 
   .portrait-wrap {
@@ -1118,7 +1165,7 @@ img {
 @media (max-width: 420px) {
   .hero-grid {
     grid-template-columns: 1fr;
-    row-gap: 20px;
+    row-gap: 42px;
   }
 
   .portrait-wrap {

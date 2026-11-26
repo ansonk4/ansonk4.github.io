@@ -503,6 +503,37 @@ img {
   opacity: 1;
 }
 
+/* Textless hint that the portrait swaps: the real photo briefly "peeks"
+   through once after load, and ghosts in faintly on hover. Both stop once
+   the visitor has clicked. */
+.portrait-wrap-peek[data-portrait="default"] .portrait-image-alternate {
+  animation: portrait-peek 1600ms ease-in-out 1400ms 1 both;
+}
+
+@media (hover: hover) {
+  .portrait-wrap-peek[data-portrait="default"]:hover .portrait-image-alternate {
+    animation: none;
+    opacity: 0.22;
+  }
+}
+
+@keyframes portrait-peek {
+  0%,
+  100% {
+    opacity: 0;
+  }
+
+  45% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portrait-wrap-peek[data-portrait="default"] .portrait-image-alternate {
+    animation: none;
+  }
+}
+
 .intro-panel {
   align-self: center;
   min-width: 0;

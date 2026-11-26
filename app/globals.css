@@ -498,56 +498,40 @@ img {
   transition: opacity 140ms ease;
 }
 
-.portrait-hint {
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  z-index: 2;
-  margin-top: 6px;
-  transform: translateX(-50%);
-  font-family: var(--font-tufte);
-  font-size: var(--type-small);
-  font-style: italic;
-  line-height: 1.2;
-  white-space: nowrap;
-  color: var(--color-copy);
-  opacity: 0.5;
-  pointer-events: none;
-  transition: opacity 160ms ease;
-}
-
-.portrait-wrap:hover .portrait-hint,
-.portrait-wrap:focus-visible .portrait-hint {
-  opacity: 0.85;
-}
-
-.portrait-hint-icon {
-  font-style: normal;
-}
-
-.portrait-hint-verb-tap {
-  display: none;
-}
-
-@media (min-width: 561px) and (max-width: 820px) {
-  .portrait-hint-state {
-    display: none;
-  }
-}
-
-@media (hover: none) {
-  .portrait-hint-verb-click {
-    display: none;
-  }
-
-  .portrait-hint-verb-tap {
-    display: inline;
-  }
-}
-
 .portrait-wrap[data-portrait="default"] .portrait-image-default,
 .portrait-wrap[data-portrait="alternate"] .portrait-image-alternate {
   opacity: 1;
+}
+
+/* Textless hint that the portrait swaps: the real photo briefly "peeks"
+   through once after load, and ghosts in faintly on hover. Both stop once
+   the visitor has clicked. */
+.portrait-wrap-peek[data-portrait="default"] .portrait-image-alternate {
+  animation: portrait-peek 1600ms ease-in-out 1400ms 1 both;
+}
+
+@media (hover: hover) {
+  .portrait-wrap-peek[data-portrait="default"]:hover .portrait-image-alternate {
+    animation: none;
+    opacity: 0.22;
+  }
+}
+
+@keyframes portrait-peek {
+  0%,
+  100% {
+    opacity: 0;
+  }
+
+  45% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portrait-wrap-peek[data-portrait="default"] .portrait-image-alternate {
+    animation: none;
+  }
 }
 
 .intro-panel {
@@ -1094,7 +1078,7 @@ img {
 
   .hero-grid {
     grid-template-columns: 1fr;
-    row-gap: 42px;
+    row-gap: 20px;
   }
 
   .portrait-wrap {
@@ -1165,7 +1149,7 @@ img {
 @media (max-width: 420px) {
   .hero-grid {
     grid-template-columns: 1fr;
-    row-gap: 42px;
+    row-gap: 20px;
   }
 
   .portrait-wrap {

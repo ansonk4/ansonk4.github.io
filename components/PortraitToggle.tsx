@@ -13,12 +13,16 @@ const portraitSizes = "(max-width: 340px) 50vw, (max-width: 560px) 170px, (max-w
 
 export function PortraitToggle({ name }: PortraitToggleProps) {
   const [showAlternate, setShowAlternate] = useState(false);
+  const [hasSwapped, setHasSwapped] = useState(false);
 
   return (
     <button
       type="button"
-      className="portrait-wrap"
-      onClick={() => setShowAlternate((current) => !current)}
+      className={hasSwapped ? "portrait-wrap" : "portrait-wrap portrait-wrap-peek"}
+      onClick={() => {
+        setHasSwapped(true);
+        setShowAlternate((current) => !current);
+      }}
       aria-label={`Swap portrait image for ${name}`}
       aria-pressed={showAlternate}
       data-portrait={showAlternate ? "alternate" : "default"}
@@ -41,13 +45,6 @@ export function PortraitToggle({ name }: PortraitToggleProps) {
         loading="eager"
         className="portrait-image portrait-image-alternate"
       />
-      <span className="portrait-hint" aria-hidden="true">
-        <span className="portrait-hint-icon">↻</span>{" "}
-        <span className="portrait-hint-state">{showAlternate ? "real photo · " : "AI-drawn · "}</span>
-        <span className="portrait-hint-verb-click">click</span>
-        <span className="portrait-hint-verb-tap">tap</span>{" "}
-        {showAlternate ? "for the drawing" : "for the real me"}
-      </span>
     </button>
   );
 }

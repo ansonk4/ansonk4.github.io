@@ -83,14 +83,6 @@ export interface Shark {
   enterAt: number;
   /** World time after which the entrance ends regardless, so no shark lingers off-screen. */
   enterUntil: number;
-  /**
-   * Local change: a shark that lives further down the page, below the first screen,
-   * patrols around this world y instead of following the reader's view, so it's found
-   * by scrolling down. null for the sharks that stay with the view.
-   */
-  homeY: number | null;
-  /** The bottom of the first screen; the shark that lives below it keeps its snout under it. */
-  fold: number;
 }
 
 export interface WorldEvent {
@@ -205,13 +197,6 @@ export class World {
       const j = randInt(0, i);
       [delays[i], delays[j]] = [delays[j], delays[i]];
     }
-    // One shark (the second biggest) waits further down the page, out of the first
-    // screen, for the reader to find by scrolling. Only when the page runs on far
-    // enough below the screen to give it room.
-    const viewBottom = viewTop + viewH;
-    const below = H - viewBottom;
-    const deepIndex = sharkCount > 1 && below > baseLength * 1.2 ? 1 : -1;
-    const deepY = viewBottom + Math.min(below / 2, viewH * 0.75);
 
     this.sharks = [];
     for (let i = 0; i < sharkCount; i++) {
@@ -226,15 +211,7 @@ export class World {
       // Swim in toward (enterX, enterY); the patrol circuit takes over once it gets there.
       let enterX = W / 2;
       let enterY = cy0;
-      const deep = i === deepIndex;
-      let orbit = orbitRadius;
-      if (deep) {
-        // Already in its spot, cruising sideways a little below the fold.
-        orbit = Math.min(orbitRadius, Math.max(0, (deepY - viewBottom) * 0.6));
-        x = W * rand(0.25, 0.75);
-        y = deepY + rand(-0.3, 0.3) * orbit;
-        heading = (Math.random() < 0.5 ? 0 : Math.PI) + rand(-0.3, 0.3);
-      } else if (this.entrance) {
+      if (this.entrance) {
         // Snout just past the edge, body trailing behind it off-screen.
         const lag = length * rand(0.04, 0.2);
         const side = sides[i];
@@ -273,17 +250,15 @@ export class World {
         hunger: rand(0.25, 0.75),
         wander: 0,
         orbitDir,
-        orbitRadius: orbit,
+        orbitRadius,
         target: null,
         retargetAt: 0,
         depth: size,
-        entering: this.entrance && !deep,
+        entering: this.entrance,
         enterX,
         enterY,
-        enterAt: this.time + (this.entrance && !deep ? delays[i] : 0),
-        enterUntil: this.time + (this.entrance && !deep ? delays[i] : 0) + 12,
-        homeY: deep ? deepY : null,
-        fold: viewBottom,
+        enterAt: this.time + (this.entrance ? delays[i] : 0),
+        enterUntil: this.time + (this.entrance ? delays[i] : 0) + 12,
       });
     }
     // Smaller (farther) sharks draw first so the big one swims over them.
@@ -570,17 +545,12 @@ export class World {
 
   private stepSharks(dt: number) {
     const { sharks, width: W, height: H, time } = this;
-    const screenH = this.viewHeight;
+    const viewH = this.viewHeight;
+    const minSide = Math.min(W, viewH);
     const cxW = W / 2;
-    const viewCY = this.viewCenterY;
+    const cyW = this.viewCenterY;
 
     for (const sh of sharks) {
-      // Each shark patrols around a centre: the reader's view, or for the shark that
-      // lives further down the page, its own stretch of it (kept inside the page).
-      const home = sh.homeY === null ? null : Math.min(sh.homeY, H - sh.orbitRadius - sh.length * 0.3);
-      const cyW = home ?? viewCY;
-      const viewH = home === null ? screenH : Math.max(sh.orbitRadius * 2 + sh.length * 0.6, screenH * 0.5);
-      const minSide = Math.min(W, viewH);
       const L = sh.length;
       const nodes = sh.nodes;
       const hx = nodes[0];
@@ -678,7 +648,7 @@ export class World {
       const ex = (hx - cxW) / (W * 0.3);
       const ey = (hy - cyW) / (viewH * 0.16);
       const e2 = ex * ex + ey * ey;
-      if (e2 < 1 && home === null) {
+      if (e2 < 1) {
         const e = Math.sqrt(e2) || 1e-3;
         const w = (1 - e) * (hunting ? 1 : 2.5);
         dx += (ex / e) * w;
@@ -695,16 +665,6 @@ export class World {
         const d = Math.hypot(toX, toY) || 1;
         dx += (toX / d) * w;
         dy += (toY / d) * w;
-      }
-
-      // The shark that lives further down stays in its stretch of the page: below the
-      // first screen (so it's only met by scrolling down) and above the page's end.
-      if (home !== null) {
-        const top = sh.fold + L * 0.7;
-        const bottom = Math.max(top, Math.min(H - L * 0.25, home + screenH * 0.5));
-        const up = clamp((top + L * 0.3 - hy) / (L * 0.3), 0, 1);
-        const down = clamp((hy - (bottom - L * 0.3)) / (L * 0.3), 0, 1);
-        dy += (up - down) * 6;
       }
 
       const desired = Math.atan2(dy, dx);
